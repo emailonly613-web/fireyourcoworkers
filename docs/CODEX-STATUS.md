@@ -14,14 +14,21 @@ critical path for Checkpoints 3–6.
 
 - WEBSITE: PASS — complete premium root page with hero, game, characters, replay, challenge, install, launch-list, and footer verified in-browser.
 - HERO: PASS — living desktop and mobile hero implemented and verified.
-- PLAYABLE GAME: PASS — deterministic integrated level plus visible HR rules, cosmetic squish, reactions, a recoverable 100% lawsuit sequence, and compliance-aware completion.
-- MOBILE: PASS — complete 390 px root-page proof with no horizontal overflow; tablet also passes at 768×1024.
+- PLAYABLE GAME: PASS — the elevator, all three pieces, instructions, controls, HR state,
+  cosmetic squish, recoverable lawsuit, and completion loop now remain together in the
+  primary play view. First-run orientation and persistent How To Play access are live.
+- VIRAL LOOP: PASS for a casual display-only launch — generic pre-play sharing, native Web
+  Share, clipboard/manual fallback, post-run challenge links, recipient targets, beat/tie/miss
+  results, and onward sharing are live. Challenge claims are visibly labeled self-reported;
+  cryptographically signed competitive challenges remain pending.
+- MOBILE: PASS — live proof at 390×844 portrait, 844×390 landscape, 1024×768 tablet,
+  and 1440×900 desktop shows no horizontal overflow and keeps the rack and elevator usable.
 - PWA: PASS — the production domain serves the manifest, service worker, install assets,
   and screenshots; Chromium is controlled by `/sw.js`. The identical starter-level build
   previously passed the offline-reload proof.
-- ANALYTICS: PASS for anonymous client event creation — all nine approved event names were
-  observed in live interaction and published through the local dataLayer adapter. External
-  analytics delivery is not configured or claimed.
+- ANALYTICS: PASS for anonymous client event creation — the allowlisted client contract now
+  covers twelve privacy-safe event types including share selection, challenge opening, and
+  challenge completion. External analytics delivery is not configured or claimed.
 - SOCIAL CREATIVE PACKAGE: PASS — all eight named concepts are exported from truthful
   real-build sources in MP4 and WebM at 1080×1920, 30 fps, six seconds, and silent;
   desktop and mobile gameplay recordings are also present.
@@ -30,12 +37,15 @@ critical path for Checkpoints 3–6.
   `8d62473f2773cc70981bfe866e81f3d6938d21d3`.
 - PUBLIC PREVIEW CONSOLE: PASS — explicit SVG/PNG icons are deployed and a fresh desktop
   Chromium run produced zero console errors while exercising the live 99→100 lawsuit path.
-- PRODUCTION CUTOVER: PASS — `https://fireyourcoworkers.com/` now serves the Codex build
-  from commit `4146dd339eec2ce0d654257a6ae68b3ca78124ae` in ACTIVE deployment
-  `952e8f48-ce52-443b-8655-8a32daeff856`. The apex and `www` attachments remain ACTIVE.
-- PRODUCTION CONSOLE AND GAME: PASS — a clean-domain browser run produced zero warnings
-  or errors, rejected an invalid placement, accepted the three-move deterministic solution,
-  and displayed `Elevator full. Technically legal.`
+- PRODUCTION CUTOVER: PASS — `https://fireyourcoworkers.com/` now serves the upgraded build
+  from commit `aa17db1388b50d3b44fbe43c36f42555c0a22418` in ACTIVE deployment
+  `70f8693d-8b64-4805-b6ec-c5f8dd27c230`. The apex and `www` attachments remain ACTIVE;
+  deployment `952e8f48-ce52-443b-8655-8a32daeff856` is the immediate rollback target.
+- PRODUCTION GAME SMOKE: PASS — the live domain showed the first-run tutorial, completed the
+  deterministic three-move phone solution, exposed share plus copy-link actions, reopened a
+  self-reported recipient challenge, and passed portrait, landscape, tablet, and desktop geometry.
+- CURRENT FOUNDER-REVIEW SCORE: 8.8 / 10 — materially improved from the 2 / 10 baseline.
+  The largest remaining product gap is the signed, server-verified competitive challenge rail.
 
 ## SEO override status
 
@@ -71,6 +81,6 @@ critical path for Checkpoints 3–6.
 
 ## Exact next task
 
-Founder review of the live replacement at `https://fireyourcoworkers.com/`, followed by
-fine tuning and the expanded SEO lane as directed. The rejected production deployment remains
-available as the documented rollback target.
+Founder review of the upgraded live game at `https://fireyourcoworkers.com/`, followed by the
+remaining product pass needed to reach 10 / 10—especially the signed challenge backend. The
+expanded SEO lane follows founder visual approval; Stripe remains after SEO as directed.
