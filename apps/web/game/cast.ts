@@ -15,12 +15,14 @@ export type CastArtKey =
 export interface CastMember {
   readonly id: CastArtKey;
   readonly slot: PieceId;
+  readonly kind: "coworker" | "equipment";
   readonly publicName: string;
   readonly shortName: string;
   readonly note: string;
   readonly department: string;
   readonly terminationReason: string;
   readonly terminationLine: string;
+  readonly selectionLines: readonly string[];
   readonly successLines: readonly string[];
   readonly failureLines: readonly string[];
 }
@@ -42,12 +44,17 @@ const FOUNDERS_FLOOR: ShiftDefinition = Object.freeze({
     "sleeping-intern": Object.freeze({
       id: "sleeping-intern",
       slot: "sleeping-intern",
+      kind: "coworker",
       publicName: "Sleeping Intern",
       shortName: "Intern",
       note: "Long, sleepy, surprisingly load-bearing.",
       department: "Unpaid horizontal specialist",
       terminationReason: "Slept through the entire orientation.",
       terminationLine: "Exit interview postponed until after the nap.",
+      selectionLines: Object.freeze([
+        "Fine. Wake me when the shape fits.",
+        "This meeting could have been a nap.",
+      ]),
       successLines: Object.freeze([
         "…wake me when we get there.",
         "This counts as professional development.",
@@ -61,12 +68,17 @@ const FOUNDERS_FLOOR: ShiftDefinition = Object.freeze({
     "micro-managing-ceo": Object.freeze({
       id: "micro-managing-ceo",
       slot: "micro-managing-ceo",
+      kind: "coworker",
       publicName: "Micro-Managing CEO",
       shortName: "CEO",
       note: "Wide stance. Wider liability radius.",
       department: "Executive obstruction department",
       terminationReason: "Occupied the entire middle row.",
       terminationLine: "Leadership has been right-sized.",
+      selectionLines: Object.freeze([
+        "I assumed I was the strategy.",
+        "Rotate the org chart around me.",
+      ]),
       successLines: Object.freeze([
         "Exactly where I delegated myself.",
         "Great fit. My idea, obviously.",
@@ -80,12 +92,17 @@ const FOUNDERS_FLOOR: ShiftDefinition = Object.freeze({
     "broken-copy-machine": Object.freeze({
       id: "broken-copy-machine",
       slot: "broken-copy-machine",
+      kind: "equipment",
       publicName: "Broken Copy Machine",
       shortName: "Copier",
       note: "Rigid equipment. Zero spatial awareness.",
       department: "Operational equipment concern",
       terminationReason: "Became load-bearing without approval.",
       terminationLine: "Asset removed from the org chart.",
+      selectionLines: Object.freeze([
+        "SELECTED. PAPER JAM PENDING.",
+        "TONER LOW. CONFIDENCE UNCHANGED.",
+      ]),
       successLines: Object.freeze([
         "PLACEMENT ACCEPTED. PAPERWORK PENDING.",
         "PC LOAD LETTER. CAREER LOAD LETTER.",
@@ -108,12 +125,17 @@ const AFTER_HOURS_ENGINEERING: ShiftDefinition = Object.freeze({
     "sleeping-intern": Object.freeze({
       id: "burned-out-engineer",
       slot: "sleeping-intern",
+      kind: "coworker",
       publicName: "Burned-Out Engineer",
       shortName: "Engineer",
       note: "Horizontally scaling since 2:14 a.m.",
       department: "Production incident furniture",
       terminationReason: "Deployed while technically unconscious.",
       terminationLine: "Rollback access has been revoked.",
+      selectionLines: Object.freeze([
+        "That selection passed locally.",
+        "Rotate first. Document never.",
+      ]),
       successLines: Object.freeze([
         "Ship it before I regain judgment.",
         "That passed locally.",
@@ -127,12 +149,17 @@ const AFTER_HOURS_ENGINEERING: ShiftDefinition = Object.freeze({
     "micro-managing-ceo": Object.freeze({
       id: "reply-all-director",
       slot: "micro-managing-ceo",
+      kind: "coworker",
       publicName: "Reply-All Director",
       shortName: "Director",
       note: "Copies the whole company. Occupies the whole row.",
       department: "Strategic inbox amplification",
       terminationReason: "Replied all to the elevator.",
       terminationLine: "Visibility has been reduced to zero.",
+      selectionLines: Object.freeze([
+        "Looping in the entire grid.",
+        "Adding shape visibility.",
+      ]),
       successLines: Object.freeze([
         "Looping in the elevator.",
         "Adding visibility and seventeen people.",
@@ -146,12 +173,17 @@ const AFTER_HOURS_ENGINEERING: ShiftDefinition = Object.freeze({
     "broken-copy-machine": Object.freeze({
       id: "coffee-machine",
       slot: "broken-copy-machine",
+      kind: "equipment",
       publicName: "Office Coffee Machine",
       shortName: "Coffee",
       note: "Square, essential, and one warning light from mutiny.",
       department: "Employee retention infrastructure",
       terminationReason: "Kept morale dangerously caffeinated.",
       terminationLine: "Benefits discontinued immediately.",
+      selectionLines: Object.freeze([
+        "SELECTION DISPENSED. MORALE EXTRA.",
+        "ROTATION BREWING.",
+      ]),
       successLines: Object.freeze([
         "MORALE DISPENSED. CUP NOT INCLUDED.",
         "PRODUCTIVITY MODE: QUESTIONABLE.",

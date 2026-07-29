@@ -2,6 +2,7 @@ export const ANALYTICS_EVENT_NAMES = [
   "page_view",
   "play_started",
   "first_piece_grabbed",
+  "hint_requested",
   "valid_drop",
   "invalid_drop",
   "level_completed",
@@ -32,6 +33,11 @@ export interface AnalyticsEventPayloadMap {
   page_view: { surface: PageSurface };
   play_started: { level_id: string; source: PlaySource };
   first_piece_grabbed: { level_id: string; piece_id: string };
+  hint_requested: {
+    level_id: string;
+    piece_id: string;
+    result: "placement" | "recover";
+  };
   valid_drop: { level_id: string; piece_id: string; move_number: number };
   invalid_drop: {
     level_id: string;
@@ -109,6 +115,7 @@ const DROP_FAILURES: readonly DropFailure[] = [
   "hr_rule",
   "unknown",
 ];
+const HINT_RESULTS = ["placement", "recover"] as const;
 const REPLAY_SOURCES: readonly ReplaySource[] = [
   "challenge",
   "highlight",
@@ -141,6 +148,11 @@ const EVENT_FIELDS: Record<AnalyticsEventName, Record<string, FieldRule>> = {
     source: { type: "enum", values: PLAY_SOURCES },
   },
   first_piece_grabbed: { level_id: IDENTIFIER, piece_id: IDENTIFIER },
+  hint_requested: {
+    level_id: IDENTIFIER,
+    piece_id: IDENTIFIER,
+    result: { type: "enum", values: HINT_RESULTS },
+  },
   valid_drop: {
     level_id: IDENTIFIER,
     piece_id: IDENTIFIER,

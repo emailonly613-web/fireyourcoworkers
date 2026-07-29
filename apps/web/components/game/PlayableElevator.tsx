@@ -19,15 +19,20 @@ import {
   ReplyAllDirector,
 } from "@/components/characters/ShiftCharacterArt";
 import { GameTutorial } from "@/components/game/GameTutorial";
+import { PieceShape } from "@/components/game/PieceShape";
 import { PerformanceReviewActions } from "@/components/share/PerformanceReviewActions";
 import { ShareChallengeButton } from "@/components/share/ShareChallengeButton";
 import {
   HR_RULE_DEFINITIONS,
+  HINT_TIME_PENALTY_MS,
   PIECE_IDS,
+  applyHintTimePenalty,
   createHrPersistentState,
   createInitialState,
   evaluateHr,
   getPieceDefinition,
+  getDoorPressureState,
+  getGameHint,
   getRotatedCells,
   isSolved,
   normalizeRotation,
@@ -36,6 +41,7 @@ import {
   undo,
   type Cell,
   type GameState,
+  type GameHint,
   type HrAttempt,
   type HrPersistentState,
   type PieceId,
@@ -92,6 +98,12 @@ const INITIAL_ROTATIONS: RotationMap = {
   "broken-copy-machine": 0,
 };
 
+const SHAPE_LABELS: Readonly<Record<PieceId, string>> = Object.freeze({
+  "sleeping-intern": "3-wide bar",
+  "micro-managing-ceo": "T-shape",
+  "broken-copy-machine": "2 × 2 block",
+});
+
 const BEST_STORAGE_PREFIX = "fyc-floor-one-best";
 
 function cellKey({ x, y }: Cell) {
@@ -129,7 +141,7 @@ function isBetterResult(candidate: PersonalBest, current: PersonalBest | null) {
 }
 
 function formatElapsedTime(elapsedMs: number | null | undefined) {
-  if (!elapsedMs) return "—";
+  if (elapsedMs === null || elapsedMs === undefined) return "—";
   return `${(elapsedMs / 1_000).toFixed(1)}s`;
 }
 
@@ -239,21 +251,91 @@ function PlacedPiece({
   );
 }
 
+function PreviewPiece({
+  preview,
+  gridWidth,
+  gridHeight,
+  reaction,
+  shiftId,
+  showArt,
+}: {
+  preview: PlacementPreview;
+  gridWidth: number;
+  gridHeight: number;
+  reaction: PieceReaction | null;
+  shiftId: ShiftId;
+  showArt: boolean;
+}) {
+  if (preview.rotation === null || preview.cells.length === 0) return null;
+  const placement: PiecePlacement = {
+    pieceId: preview.pieceId,
+    origin: preview.origin,
+    rotation: preview.rotation,
+    cells: preview.cells,
+  };
+  const violationReason = preview.violations[0]?.reason;
+  const lowerHalf = pieceBounds(preview.cells).minY >= Math.floor(gridHeight / 2);
+  const stamp = preview.valid
+    ? "FITS"
+    : violationReason === "collision"
+    ? "PERSONAL SPACE DENIED"
+    : violationReason === "blocked-cell"
+    ? "DOOR BUTTONS ARE NOT SEATING"
+    : violationReason === "out-of-bounds"
+    ? "REMOTE WORK REJECTED"
+    : "NO FIT";
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`playable-preview playable-piece--${preview.pieceId} playable-preview--${preview.valid ? "valid" : "invalid"}${lowerHalf ? " playable-preview--lower" : ""}`}
+      data-rotation={preview.rotation}
+      data-testid="placement-preview"
+      style={placementStyle(placement, gridWidth, gridHeight)}
+    >
+      <PieceCellMask placement={placement} />
+      {showArt ? (
+        <span className="playable-piece__art-clip playable-preview__art-clip">
+          <span
+            className="playable-piece__art-wrap"
+            style={{ "--piece-rotation": `${preview.rotation}deg` } as CSSProperties}
+          >
+            <PieceArt pieceId={preview.pieceId} shiftId={shiftId} />
+          </span>
+        </span>
+      ) : null}
+      <strong className="playable-preview__stamp">{stamp}</strong>
+      {showArt && reaction?.pieceId === preview.pieceId ? (
+        <span className={`playable-piece__reaction playable-piece__reaction--${reaction.tone}`}>
+          {reaction.line}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export function PlayableElevator() {
   const [game, setGame] = useState<GameState>(() => createInitialState());
   const [shiftId, setShiftId] = useState<ShiftId>(DEFAULT_SHIFT_ID);
   const [rotations, setRotations] = useState<RotationMap>(INITIAL_ROTATIONS);
-  const [selectedPiece, setSelectedPiece] = useState<PieceId>("micro-managing-ceo");
+  const [selectedPiece, setSelectedPiece] = useState<PieceId | null>(null);
+  const [selectionQuip, setSelectionQuip] = useState("Pick the pulsing shape to start the shift.");
   const [drag, setDrag] = useState<DragState | null>(null);
+  const [placementPending, setPlacementPending] = useState(false);
+  const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
+  const [liveElapsedMs, setLiveElapsedMs] = useState(0);
+  const [hint, setHint] = useState<GameHint | null>(null);
+  const [hintUsed, setHintUsed] = useState(false);
   const [preview, setPreview] = useState<PlacementPreview | null>(null);
   const [rejectedPreview, setRejectedPreview] = useState<PlacementPreview | null>(null);
   const [acceptedPreview, setAcceptedPreview] = useState<PlacementPreview | null>(null);
-  const [message, setMessage] = useState("Select a coworker, then drag or choose a target cell.");
+  const [message, setMessage] = useState("Pick a visible shape. Pack two coworkers and one hazard, then fire one coworker before HR fires you.");
   const [invalidPulse, setInvalidPulse] = useState(0);
   const [reaction, setReaction] = useState<PieceReaction | null>(null);
   const [incident, setIncident] = useState<IncidentBeat | null>(null);
   const [cleanStreak, setCleanStreak] = useState(0);
   const [resultReveal, setResultReveal] = useState(false);
+  const [completedRawElapsedMs, setCompletedRawElapsedMs] = useState<number | null>(null);
   const [completedElapsedMs, setCompletedElapsedMs] = useState<number | null>(null);
   const [firedPieceId, setFiredPieceId] = useState<PieceId | null>(null);
   const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
@@ -272,11 +354,17 @@ export function PlayableElevator() {
   const tutorialTriggerRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const firstGrabTrackedRef = useRef(false);
+  const hintUsedRef = useRef(false);
   const completionTrackedRef = useRef(false);
   const invalidAttemptCounterRef = useRef(0);
   const lawsuitEpisodeTrackedRef = useRef(false);
   const startedAtRef = useRef(0);
+  const clockPausedAtRef = useRef(0);
   const incidentSerialRef = useRef(0);
+  const placementTimerRef = useRef<number | null>(null);
+  const acceptedPreviewTimerRef = useRef<number | null>(null);
+  const rejectedPreviewTimerRef = useRef<number | null>(null);
+  const hintTimerRef = useRef<number | null>(null);
   const resultRevealTimerRef = useRef<number | null>(null);
 
   const targetCells = useMemo(
@@ -292,9 +380,14 @@ export function PlayableElevator() {
     () => evaluateHr(game, { persistentState: hrPersistentState }),
     [game, hrPersistentState],
   );
-  const inputLocked = solved || hr.lawsuit;
+  const inputLocked = solved || hr.lawsuit || placementPending;
   const placedCount = Object.keys(game.placements).length;
   const attemptMoves = game.actionLog.length;
+  const displayedElapsedMs = completedElapsedMs ?? applyHintTimePenalty(liveElapsedMs, hintUsed);
+  const doorPressure = getDoorPressureState(completedRawElapsedMs ?? liveElapsedMs, {
+    completed: solved && !hr.lawsuit,
+    lawsuit: hr.lawsuit,
+  });
   const challengeVerdict = solved && challengeTarget
     ? compareChallengeResult(challengeTarget, {
         elapsedMs: completedElapsedMs ?? undefined,
@@ -303,6 +396,14 @@ export function PlayableElevator() {
       })
     : null;
   const shift = useMemo(() => getShift(shiftId), [shiftId]);
+  const fireablePieceIds = useMemo(
+    () => PIECE_IDS.filter((pieceId) => shift.cast[pieceId].kind === "coworker"),
+    [shift],
+  );
+  const evidencePieceId = useMemo(
+    () => PIECE_IDS.find((pieceId) => shift.cast[pieceId].kind === "equipment") ?? null,
+    [shift],
+  );
   const firedMember = firedPieceId ? shift.cast[firedPieceId] : null;
   const resultShareLabel = challengeVerdict === "beat"
     ? "SEND THE RECEIPT"
@@ -387,7 +488,44 @@ export function PlayableElevator() {
     if (resultRevealTimerRef.current !== null) {
       window.clearTimeout(resultRevealTimerRef.current);
     }
+    if (placementTimerRef.current !== null) {
+      window.clearTimeout(placementTimerRef.current);
+    }
+    if (acceptedPreviewTimerRef.current !== null) {
+      window.clearTimeout(acceptedPreviewTimerRef.current);
+    }
+    if (rejectedPreviewTimerRef.current !== null) {
+      window.clearTimeout(rejectedPreviewTimerRef.current);
+    }
+    if (hintTimerRef.current !== null) {
+      window.clearTimeout(hintTimerRef.current);
+    }
   }, []);
+
+  useEffect(() => {
+    if (runStartedAt === null) {
+      clockPausedAtRef.current = 0;
+      return;
+    }
+    if (solved || hr.lawsuit) {
+      if (clockPausedAtRef.current === 0) clockPausedAtRef.current = window.performance.now();
+      return;
+    }
+    if (clockPausedAtRef.current !== 0) {
+      const resumedAt = window.performance.now();
+      const shiftedStartedAt = startedAtRef.current + (resumedAt - clockPausedAtRef.current);
+      clockPausedAtRef.current = 0;
+      startedAtRef.current = shiftedStartedAt;
+      setRunStartedAt(shiftedStartedAt);
+      return;
+    }
+    const updateClock = () => {
+      setLiveElapsedMs(Math.max(0, Math.round(window.performance.now() - runStartedAt)));
+    };
+    updateClock();
+    const timer = window.setInterval(updateClock, 100);
+    return () => window.clearInterval(timer);
+  }, [hr.lawsuit, runStartedAt, solved]);
 
   useEffect(() => {
     if (!resultReveal) return;
@@ -411,7 +549,6 @@ export function PlayableElevator() {
   }, [firedPieceId]);
 
   const dismissTutorial = () => {
-    markTutorialSeen();
     setTutorialOpen(false);
     window.setTimeout(() => {
       firstPieceRef.current?.focus({ preventScroll: true });
@@ -479,6 +616,14 @@ export function PlayableElevator() {
     );
   };
 
+  const clearHintVisual = () => {
+    if (hintTimerRef.current !== null) {
+      window.clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = null;
+    }
+    setHint(null);
+  };
+
   const isPressured = (placement: PiecePlacement) => {
     const otherCells = (Object.values(game.placements).filter(Boolean) as PiecePlacement[])
       .filter((candidate) => candidate.pieceId !== placement.pieceId)
@@ -512,7 +657,11 @@ export function PlayableElevator() {
   const ensureRunStarted = (pieceId: PieceId) => {
     if (firstGrabTrackedRef.current) return;
     firstGrabTrackedRef.current = true;
-    startedAtRef.current = window.performance.now();
+    const startedAt = window.performance.now();
+    startedAtRef.current = startedAt;
+    clockPausedAtRef.current = 0;
+    setRunStartedAt(startedAt);
+    setLiveElapsedMs(0);
     trackAnalyticsEvent("first_piece_grabbed", {
       level_id: game.level.id,
       piece_id: pieceId,
@@ -530,7 +679,10 @@ export function PlayableElevator() {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const rotation = game.placements[pieceId]?.rotation ?? rotations[pieceId];
+    const member = getCastMember(shiftId, pieceId);
+    const quip = member.selectionLines[game.actionLog.length % member.selectionLines.length];
     setSelectedPiece(pieceId);
+    setSelectionQuip(quip);
     ensureRunStarted(pieceId);
     const nextDrag = {
       moved: false,
@@ -543,7 +695,7 @@ export function PlayableElevator() {
     dragRef.current = nextDrag;
     setDrag(nextDrag);
     setPreview(null);
-    setMessage(`${getCastMember(shiftId, pieceId).publicName} selected. Drag it into the elevator.`);
+    setMessage(`${member.publicName}, ${SHAPE_LABELS[pieceId]} selected. “${quip}” Drag it into the elevator.`);
   };
 
   const moveDrag = (event: ReactPointerEvent<HTMLElement>) => {
@@ -595,8 +747,14 @@ export function PlayableElevator() {
       setInvalidPulse((value) => value + 1);
       setAcceptedPreview(null);
       if (candidate) {
+        if (rejectedPreviewTimerRef.current !== null) {
+          window.clearTimeout(rejectedPreviewTimerRef.current);
+        }
         setRejectedPreview(candidate);
-        window.setTimeout(() => setRejectedPreview(null), 900);
+        rejectedPreviewTimerRef.current = window.setTimeout(() => {
+          setRejectedPreview(null);
+          rejectedPreviewTimerRef.current = null;
+        }, 1_050);
       }
       const member = getCastMember(shiftId, pieceId);
       setCleanStreak(0);
@@ -649,10 +807,18 @@ export function PlayableElevator() {
       return;
     }
 
+    clearHintVisual();
     setGame(result.state);
+    markTutorialSeen();
     setRejectedPreview(null);
     setAcceptedPreview(candidate);
-    window.setTimeout(() => setAcceptedPreview(null), 700);
+    if (acceptedPreviewTimerRef.current !== null) {
+      window.clearTimeout(acceptedPreviewTimerRef.current);
+    }
+    acceptedPreviewTimerRef.current = window.setTimeout(() => {
+      setAcceptedPreview(null);
+      acceptedPreviewTimerRef.current = null;
+    }, 700);
     setRotations((current) => ({ ...current, [pieceId]: candidate.rotation as Rotation }));
     const nextHr = evaluateHr(result.state, { persistentState: hrPersistentState });
     const member = getCastMember(shiftId, pieceId);
@@ -678,7 +844,10 @@ export function PlayableElevator() {
       move_number: result.state.actionLog.length,
     });
     if (isSolved(result.state) && !nextHr.lawsuit && !completionTrackedRef.current) {
-      const elapsedMs = Math.max(1, Math.round(window.performance.now() - startedAtRef.current));
+      const rawElapsedMs = Math.max(1, Math.round(window.performance.now() - startedAtRef.current));
+      const elapsedMs = applyHintTimePenalty(rawElapsedMs, hintUsedRef.current);
+      setLiveElapsedMs(rawElapsedMs);
+      setCompletedRawElapsedMs(rawElapsedMs);
       setCompletedElapsedMs(elapsedMs);
       setFiredPieceId(null);
       setResultReveal(false);
@@ -764,19 +933,51 @@ export function PlayableElevator() {
     setPreview(null);
   };
 
+  const inspectCell = (cell: Cell) => {
+    if (inputLocked || !selectedPiece || dragRef.current) return;
+    const rotation = game.placements[selectedPiece]?.rotation ?? rotations[selectedPiece];
+    setPreview(previewPlacement(game, selectedPiece, { ...cell, rotation }));
+  };
+
+  const clearInspectedCell = () => {
+    if (dragRef.current || placementPending) return;
+    setPreview(null);
+  };
+
   const placeFromCell = (cell: Cell) => {
     if (inputLocked) return;
+    if (!selectedPiece) {
+      setMessage("Pick a visible shape from the rack before choosing a gold square.");
+      firstPieceRef.current?.focus({ preventScroll: true });
+      return;
+    }
     ensureRunStarted(selectedPiece);
     const rotation = game.placements[selectedPiece]?.rotation ?? rotations[selectedPiece];
-    finishPlacement(
-      selectedPiece,
-      previewPlacement(game, selectedPiece, { ...cell, rotation }),
-    );
+    const candidate = previewPlacement(game, selectedPiece, { ...cell, rotation });
+    setPreview(candidate);
+    setPlacementPending(true);
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const commit = () => {
+      placementTimerRef.current = null;
+      setPlacementPending(false);
+      setPreview(null);
+      finishPlacement(selectedPiece, candidate);
+    };
+    if (reduceMotion) {
+      commit();
+      return;
+    }
+    placementTimerRef.current = window.setTimeout(commit, 220);
   };
 
   const rotateSelected = () => {
     if (inputLocked) {
       if (hr.lawsuit) setMessage("Rotation is frozen. Undo or restart to answer Legal.");
+      return;
+    }
+    if (!selectedPiece) {
+      setMessage("Pick a shape before asking the elevator to rotate it.");
+      firstPieceRef.current?.focus({ preventScroll: true });
       return;
     }
     ensureRunStarted(selectedPiece);
@@ -797,8 +998,12 @@ export function PlayableElevator() {
       setGame(result.state);
     }
 
+    clearHintVisual();
     setRotations((current) => ({ ...current, [selectedPiece]: nextRotation }));
-    setMessage(`${getCastMember(shiftId, selectedPiece).publicName} rotated ${nextRotation} degrees.`);
+    const member = getCastMember(shiftId, selectedPiece);
+    const quip = member.selectionLines[(nextRotation / 90) % member.selectionLines.length];
+    setSelectionQuip(quip);
+    setMessage(`${member.publicName} rotated ${nextRotation} degrees. “${quip}”`);
   };
 
   const undoLastMove = () => {
@@ -807,10 +1012,12 @@ export function PlayableElevator() {
       setMessage("Nothing to undo. The paper trail is still clean.");
       return;
     }
+    clearHintVisual();
     setGame(result.state);
     completionTrackedRef.current = false;
     setCleanStreak(0);
     setResultReveal(false);
+    setCompletedRawElapsedMs(null);
     setCompletedElapsedMs(null);
     setFiredPieceId(null);
     if (resultRevealTimerRef.current !== null) {
@@ -826,25 +1033,50 @@ export function PlayableElevator() {
   };
 
   const restartLevel = () => {
+    if (placementTimerRef.current !== null) {
+      window.clearTimeout(placementTimerRef.current);
+      placementTimerRef.current = null;
+    }
+    if (hintTimerRef.current !== null) {
+      window.clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = null;
+    }
+    if (acceptedPreviewTimerRef.current !== null) {
+      window.clearTimeout(acceptedPreviewTimerRef.current);
+      acceptedPreviewTimerRef.current = null;
+    }
+    if (rejectedPreviewTimerRef.current !== null) {
+      window.clearTimeout(rejectedPreviewTimerRef.current);
+      rejectedPreviewTimerRef.current = null;
+    }
     setGame(createInitialState());
     setRotations(INITIAL_ROTATIONS);
-    setSelectedPiece("micro-managing-ceo");
+    setSelectedPiece(null);
+    setSelectionQuip("Pick the pulsing shape to start the shift.");
+    setPlacementPending(false);
     setHrPersistentState(createHrPersistentState());
     completionTrackedRef.current = false;
     firstGrabTrackedRef.current = false;
+    hintUsedRef.current = false;
     invalidAttemptCounterRef.current = 0;
     lawsuitEpisodeTrackedRef.current = false;
     startedAtRef.current = 0;
+    clockPausedAtRef.current = 0;
+    setRunStartedAt(null);
+    setLiveElapsedMs(0);
+    setHint(null);
+    setHintUsed(false);
     setPreview(null);
     setRejectedPreview(null);
     setAcceptedPreview(null);
     dragRef.current = null;
     setDrag(null);
-    setMessage("Floor restarted. The mandatory meeting is mandatory again.");
+    setMessage("Career restarted. Pack two coworkers and one hazard, then fire one coworker.");
     setReaction(null);
     setIncident(null);
     setCleanStreak(0);
     setResultReveal(false);
+    setCompletedRawElapsedMs(null);
     setCompletedElapsedMs(null);
     setFiredPieceId(null);
     if (resultRevealTimerRef.current !== null) {
@@ -856,17 +1088,41 @@ export function PlayableElevator() {
 
   const changeShift = () => {
     if (placedCount > 0 || challengeTarget) return;
+    if (placementTimerRef.current !== null) {
+      window.clearTimeout(placementTimerRef.current);
+      placementTimerRef.current = null;
+    }
+    if (hintTimerRef.current !== null) {
+      window.clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = null;
+    }
+    if (acceptedPreviewTimerRef.current !== null) {
+      window.clearTimeout(acceptedPreviewTimerRef.current);
+      acceptedPreviewTimerRef.current = null;
+    }
+    if (rejectedPreviewTimerRef.current !== null) {
+      window.clearTimeout(rejectedPreviewTimerRef.current);
+      rejectedPreviewTimerRef.current = null;
+    }
     const nextShiftId = getNextShiftId(shiftId);
     setGame(createInitialState());
     setShiftId(nextShiftId);
-    setSelectedPiece("micro-managing-ceo");
+    setSelectedPiece(null);
+    setSelectionQuip("Pick the pulsing shape to start the shift.");
+    setPlacementPending(false);
     setRotations(INITIAL_ROTATIONS);
     setHrPersistentState(createHrPersistentState());
     completionTrackedRef.current = false;
     firstGrabTrackedRef.current = false;
+    hintUsedRef.current = false;
     invalidAttemptCounterRef.current = 0;
     lawsuitEpisodeTrackedRef.current = false;
     startedAtRef.current = 0;
+    clockPausedAtRef.current = 0;
+    setRunStartedAt(null);
+    setLiveElapsedMs(0);
+    setHint(null);
+    setHintUsed(false);
     setPreview(null);
     setRejectedPreview(null);
     setAcceptedPreview(null);
@@ -876,6 +1132,7 @@ export function PlayableElevator() {
     setIncident(null);
     setCleanStreak(0);
     setResultReveal(false);
+    setCompletedRawElapsedMs(null);
     setCompletedElapsedMs(null);
     setFiredPieceId(null);
     if (resultRevealTimerRef.current !== null) {
@@ -883,15 +1140,71 @@ export function PlayableElevator() {
       resultRevealTimerRef.current = null;
     }
     setIsNewPersonalBest(false);
-    setMessage(`${getShift(nextShiftId).title} clocked in. Pick a coworker and start packing.`);
+    setMessage(`${getShift(nextShiftId).title} clocked in. Pick a visible shape and protect your job.`);
+  };
+
+  const requestHrHint = () => {
+    if (inputLocked || hintUsedRef.current) return;
+    const nextHint = getGameHint(game);
+    if (!nextHint) {
+      setMessage("HR cannot find a compliant path. Undo the last move or restart your career.");
+      return;
+    }
+
+    hintUsedRef.current = true;
+    setHintUsed(true);
+    setHint(nextHint);
+    ensureRunStarted(nextHint.pieceId);
+    const member = getCastMember(shiftId, nextHint.pieceId);
+
+    if (nextHint.kind === "placement") {
+      setSelectedPiece(nextHint.pieceId);
+      setRotations((current) => ({ ...current, [nextHint.pieceId]: nextHint.rotation }));
+      setSelectionQuip("HR highlighted the footprint. You still have to move it.");
+      setMessage(
+        `HR HINT (+${formatElapsedTime(HINT_TIME_PENALTY_MS)}): choose ${member.shortName}, then tap the flashing green footprint.`,
+      );
+      showIncident({
+        label: "HR CONSULTATION · +5.0s",
+        line: `${member.shortName} has been highlighted. HR refuses to do the actual work.`,
+        tone: "clean",
+      });
+    } else {
+      setSelectedPiece(nextHint.pieceId);
+      const blockingRotation = game.placements[nextHint.pieceId]?.rotation;
+      if (blockingRotation !== undefined) {
+        setRotations((current) => ({ ...current, [nextHint.pieceId]: blockingRotation }));
+      }
+      setSelectionQuip(`${member.shortName} is blocking the only compliant solution.`);
+      setMessage(
+        `HR HINT (+${formatElapsedTime(HINT_TIME_PENALTY_MS)}): move ${member.publicName}. That highlighted placement blocks the solution.`,
+      );
+      showIncident({
+        label: "HR RECOVERY MEMO · +5.0s",
+        line: `Move ${member.shortName}. The current org chart has no legal future.`,
+        tone: "warning",
+      });
+    }
+
+    trackAnalyticsEvent("hint_requested", {
+      level_id: game.level.id,
+      piece_id: nextHint.pieceId,
+      result: nextHint.kind,
+    });
+    if (hintTimerRef.current !== null) window.clearTimeout(hintTimerRef.current);
+    hintTimerRef.current = window.setTimeout(() => {
+      setHint(null);
+      hintTimerRef.current = null;
+    }, 4_800);
   };
 
   const fireCoworker = (pieceId: PieceId) => {
     if (!solved || hr.lawsuit || firedPieceId) return;
     const member = getCastMember(shiftId, pieceId);
-    const elapsedMs = completedElapsedMs ?? Math.max(
-      1,
-      Math.round(window.performance.now() - startedAtRef.current),
+    if (member.kind !== "coworker") return;
+    const elapsedMs = completedElapsedMs ?? applyHintTimePenalty(
+      Math.max(1, Math.round(window.performance.now() - startedAtRef.current)),
+      hintUsedRef.current,
     );
     setFiredPieceId(pieceId);
     setMessage(`${member.publicName} terminated. ${member.terminationLine}`);
@@ -915,6 +1228,13 @@ export function PlayableElevator() {
     }),
   );
   const renderedPreview = preview ?? rejectedPreview ?? acceptedPreview;
+  const renderedPreviewPhase = preview
+    ? "live"
+    : rejectedPreview
+    ? "rejected"
+    : acceptedPreview
+    ? "accepted"
+    : "none";
 
   return (
     <section
@@ -929,20 +1249,21 @@ export function PlayableElevator() {
       <header className="playable-heading">
         <div>
           <p className="playable-kicker">Floor 01 · Mandatory Elevator Meeting</p>
-          <h2 id="playable-title">Pack the elevator. Dodge HR.</h2>
+          <h2 id="playable-title">Pack two coworkers and one hazard. Fire one coworker. Keep your job.</h2>
         </div>
         <p>
-          Drag all three workplace hazards into the highlighted elevator load. Rotate when
-          necessary. Invalid fits stay invalid, and every accepted move can be undone.
+          Fit two coworkers and one workplace hazard into the elevator. The hazard becomes
+          evidence, then choose which coworker HR terminates. Reach 100% exposure first and
+          the employee getting fired is you.
         </p>
       </header>
 
       <div className="playable-stage" data-testid="playable-stage" id="play" ref={stageRef}>
         <div className="playable-stage__toolbar">
           <ol aria-label="How to play in three steps" className="playable-micro-guide">
-            <li><b>1</b> Pick a piece</li>
-            <li><b>2</b> Drag or tap</li>
-            <li><b>3</b> Fill the gold zone</li>
+            <li><b>1</b> Pick a shape</li>
+            <li><b>2</b> Fit the puzzle</li>
+            <li><b>3</b> Fire a coworker</li>
           </ol>
           <div className="playable-stage__actions">
             <button
@@ -963,6 +1284,14 @@ export function PlayableElevator() {
               surface="game"
             />
           </div>
+        </div>
+
+        <div className="playable-job-rule" data-testid="job-rule">
+          <b>THE JOB</b>
+          <span>PACK 2 PEOPLE + 1 HAZARD</span>
+          <i aria-hidden="true">→</i>
+          <span>FIRE 1 PERSON</span>
+          <em>HR 100% → YOU&apos;RE FIRED</em>
         </div>
 
         {challengeTarget ? (
@@ -1059,13 +1388,22 @@ export function PlayableElevator() {
           </section>
         </aside>
 
-        <div className={`playable-elevator${invalidPulse ? " playable-elevator--has-rejected" : ""}${acceptedPreview ? " playable-elevator--accepted" : ""}${hr.lawsuit ? " playable-elevator--lawsuit" : ""}`} key={invalidPulse}>
+        <div
+          className={`playable-elevator playable-elevator--${doorPressure.phase}${selectedPiece ? " playable-elevator--holding" : ""}${invalidPulse ? " playable-elevator--has-rejected" : ""}${acceptedPreview ? " playable-elevator--accepted" : ""}${hr.lawsuit ? " playable-elevator--lawsuit" : ""}`}
+          data-door-phase={doorPressure.phase}
+        >
           <div className="playable-elevator__header">
             <span className="playable-elevator__badge">HR</span>
             <span aria-label="Floor 1" className="playable-elevator__floor">01<i aria-hidden="true">▲</i></span>
             <div>
-              <strong>{hr.statusBand.toUpperCase()}</strong>
-              <span>{solved ? "ELEVATOR FULL" : `${placedCount} OF ${game.level.pieces.length} LOADED`}</span>
+              <strong>{hr.lawsuit ? "YOUR JOB: TERMINATED" : hr.score >= 75 ? "YOUR JOB: AT RISK" : "YOUR JOB: SAFE"}</strong>
+              <span>
+                {solved
+                  ? "ELEVATOR FULL · FIRE 1"
+                  : runStartedAt === null
+                  ? `PICK A SHAPE · ${placedCount}/${game.level.pieces.length} LOADED`
+                  : `${doorPressure.label} · ${formatElapsedTime(displayedElapsedMs)} · ${placedCount}/${game.level.pieces.length}`}
+              </span>
             </div>
             <b>{hr.score}%</b>
           </div>
@@ -1093,10 +1431,28 @@ export function PlayableElevator() {
               <span className="playable-board__reflection" />
             </div>
 
+            <div
+              aria-hidden="true"
+              className={`playable-live-doors playable-live-doors--${doorPressure.phase}${doorPressure.emergency ? " playable-live-doors--emergency" : ""}`}
+              style={{ "--door-closure": `${doorPressure.closureRatio * 100}%` } as CSSProperties}
+            >
+              <i><span /></i>
+              <i><span /></i>
+            </div>
+
             {placedCount === 0 ? (
-              <div aria-hidden="true" className="playable-empty-guide">
-                <strong>DROP ZONE</strong>
-                <span>Pick a piece above or beside the elevator, then tap a gold cell.</span>
+              <div aria-live="polite" className={`playable-empty-guide${selectedPiece ? " playable-empty-guide--holding" : ""}`} role="status">
+                {selectedPiece ? (
+                  <PieceShape
+                    className="playable-empty-guide__shape"
+                    pieceId={selectedPiece}
+                    rotation={rotations[selectedPiece]}
+                  />
+                ) : <b>1</b>}
+                <span>
+                  <strong>{selectedPiece ? `2 · FIT THE ${SHAPE_LABELS[selectedPiece].toUpperCase()}` : "1 · PICK A SHAPE ABOVE"}</strong>
+                  <small>{selectedPiece ? "Tap a gold square. Watch the ghost land first." : "Start with the pulsing card."}</small>
+                </span>
               </div>
             ) : null}
 
@@ -1124,11 +1480,19 @@ export function PlayableElevator() {
                 : "";
               return (
                 <button
-                  aria-label={blocked ? `Elevator control at column ${cell.x + 1}, row ${cell.y + 1}` : `Place selected piece at column ${cell.x + 1}, row ${cell.y + 1}`}
+                  aria-label={blocked
+                    ? `Elevator control at column ${cell.x + 1}, row ${cell.y + 1}`
+                    : selectedPiece
+                    ? `Preview ${getCastMember(shiftId, selectedPiece).shortName} ${SHAPE_LABELS[selectedPiece]} at column ${cell.x + 1}, row ${cell.y + 1}`
+                    : `Pick a shape before using column ${cell.x + 1}, row ${cell.y + 1}`}
                   className={`playable-board__cell${target ? " playable-board__cell--target" : ""}${blocked ? " playable-board__cell--blocked" : ""}${previewClass}`}
-                  disabled={blocked || inputLocked}
+                  disabled={blocked || inputLocked || !selectedPiece}
                   key={key}
+                  onBlur={clearInspectedCell}
                   onClick={() => placeFromCell(cell)}
+                  onFocus={() => inspectCell(cell)}
+                  onPointerEnter={() => inspectCell(cell)}
+                  onPointerLeave={clearInspectedCell}
                   type="button"
                 >
                   {blocked && cell.x === 5 && cell.y === 0 ? <span>DOOR</span> : null}
@@ -1152,12 +1516,20 @@ export function PlayableElevator() {
             ))}
 
             {renderedPreview ? (
-              <div
-                aria-hidden="true"
-                className={`playable-preview playable-preview--${renderedPreview.valid ? "valid" : "invalid"}`}
-                data-testid="placement-preview"
-              >
-                {renderedPreview.cells.map((cell) => (
+              <PreviewPiece
+                gridHeight={game.level.grid.height}
+                gridWidth={game.level.grid.width}
+                key={`${renderedPreviewPhase}:${renderedPreview.pieceId}:${renderedPreview.origin.x}:${renderedPreview.origin.y}:${renderedPreview.rotation}:${invalidPulse}`}
+                preview={renderedPreview}
+                reaction={reaction}
+                shiftId={shiftId}
+                showArt={renderedPreviewPhase !== "accepted"}
+              />
+            ) : null}
+
+            {hint?.kind === "placement" && !renderedPreview ? (
+              <div aria-hidden="true" className="playable-hint-preview" data-testid="hint-preview">
+                {hint.cells.map((cell) => (
                   <span
                     key={cellKey(cell)}
                     style={{
@@ -1168,6 +1540,14 @@ export function PlayableElevator() {
                     }}
                   />
                 ))}
+                <b
+                  style={{
+                    left: `${(hint.origin.x / game.level.grid.width) * 100}%`,
+                    top: `${(hint.origin.y / game.level.grid.height) * 100}%`,
+                  }}
+                >
+                  HR: TAP HERE
+                </b>
               </div>
             ) : null}
 
@@ -1206,10 +1586,10 @@ export function PlayableElevator() {
               ) : null}
               {!firedMember ? (
                 <section aria-labelledby="firing-decision-title" className="playable-firing-decision">
-                  <p>THE ELEVATOR IS FULL. HR NEEDS ONE NAME.</p>
-                  <h4 id="firing-decision-title">Who caused the paperwork?</h4>
-                  <div aria-label={`Choose one fictional ${shift.title} character to fire`}>
-                    {PIECE_IDS.map((pieceId) => {
+                  <p>THE HAZARD CAUSED THE MESS. HR STILL NEEDS A HUMAN NAME.</p>
+                  <h4 id="firing-decision-title">Which coworker becomes the scapegoat?</h4>
+                  <div aria-label={`Choose one fictional ${shift.title} coworker to fire`}>
+                    {fireablePieceIds.map((pieceId) => {
                       const member = shift.cast[pieceId];
                       return (
                         <button
@@ -1224,8 +1604,16 @@ export function PlayableElevator() {
                         </button>
                       );
                     })}
+                    {evidencePieceId ? (
+                      <article className="playable-firing-evidence" data-testid={`evidence-${evidencePieceId}`}>
+                        <span aria-hidden="true"><PieceArt pieceId={evidencePieceId} shiftId={shiftId} /></span>
+                        <b>EXHIBIT A · NOT AN EMPLOYEE</b>
+                        <strong>{shift.cast[evidencePieceId].publicName}</strong>
+                        <small>Machines get repaired. People get blamed.</small>
+                      </article>
+                    ) : null}
                   </div>
-                  <small>Fictional office archetypes only. No names, photos, or personal information.</small>
+                  <small>Only fictional coworkers can be fired. Equipment stays as evidence. No names, photos, or personal information.</small>
                 </section>
               ) : (
                 <section aria-live="polite" className="playable-termination" data-testid="termination-result">
@@ -1295,10 +1683,10 @@ export function PlayableElevator() {
               role="dialog"
             >
               <div className="playable-lawsuit__document">
-                <span className="playable-lawsuit__docket">HR-100 · FINAL NOTICE</span>
-                <strong aria-hidden="true" className="playable-lawsuit__stamp">LAWSUIT</strong>
-                <h3 id="lawsuit-title">{runVerdict.title}</h3>
-                <p>{runVerdict.caption} New placements are frozen, but your last move can still be undone.</p>
+                <span className="playable-lawsuit__docket">HR-100 · EMPLOYMENT TERMINATED</span>
+                <strong aria-hidden="true" className="playable-lawsuit__stamp">YOU&apos;RE FIRED</strong>
+                <h3 id="lawsuit-title">YOU&apos;RE FIRED.</h3>
+                <p>{runVerdict.caption} HR hit 100% before the elevator filled. Undo the last filing or restart your career.</p>
                 <ol>
                   {[...hr.activeViolations]
                     .sort((a, b) => b.score - a.score)
@@ -1322,7 +1710,7 @@ export function PlayableElevator() {
                     Restart floor
                   </button>
                   <ShareChallengeButton
-                    label="SHARE THE LAWSUIT"
+                    label="SHARE MY FIRING"
                     moves={game.actionLog.length}
                     mode="challenge"
                     result="lawsuit"
@@ -1336,7 +1724,7 @@ export function PlayableElevator() {
           ) : null}
         </div>
 
-        <aside className="playable-tray" aria-label="Movable office pieces">
+        <aside className="playable-tray" aria-label="Movable coworkers and workplace hazard">
           <div className="playable-shift-switch" data-testid="shift-switch">
             <div>
               <span>Current shift · {SHIFTS.findIndex((candidate) => candidate.id === shiftId) + 1} of {SHIFTS.length}</span>
@@ -1345,7 +1733,7 @@ export function PlayableElevator() {
             </div>
             <button
               aria-label={challengeTarget ? "Coworker challenge cast is locked" : "Swap all three coworkers"}
-              disabled={placedCount > 0 || Boolean(challengeTarget)}
+              disabled={placedCount > 0 || Boolean(challengeTarget) || placementPending}
               onClick={changeShift}
               type="button"
             >
@@ -1353,8 +1741,25 @@ export function PlayableElevator() {
             </button>
           </div>
           <div className="playable-tray__title">
-            <span>Piece rack</span>
-            <strong>Drag these 3 into the elevator</strong>
+            <div aria-live="polite" className="playable-selection-status" data-testid="selection-status">
+              {selectedPiece ? (
+                <PieceShape
+                  aria-label={`${SHAPE_LABELS[selectedPiece]} selected`}
+                  className="playable-selection-status__shape"
+                  pieceId={selectedPiece}
+                  rotation={rotations[selectedPiece]}
+                />
+              ) : <b aria-hidden="true">1</b>}
+              <span>
+                <small>{selectedPiece ? "YOU'RE HOLDING" : "START HERE"}</small>
+                <strong>
+                  {selectedPiece
+                    ? `${getCastMember(shiftId, selectedPiece).shortName} · ${SHAPE_LABELS[selectedPiece]}`
+                    : "Pick the pulsing shape"}
+                </strong>
+                <em>{selectionQuip}</em>
+              </span>
+            </div>
             <button
               aria-pressed={soundEnabled}
               className="playable-sound"
@@ -1369,30 +1774,41 @@ export function PlayableElevator() {
               const member = getCastMember(shiftId, pieceId);
               const placed = Boolean(game.placements[pieceId]);
               const selected = selectedPiece === pieceId;
+              const recommended = !selectedPiece && index === 0;
               return (
                 <button
                   aria-pressed={selected}
-                  className={`playable-tray-piece${selected ? " playable-tray-piece--selected" : ""}${placed ? " playable-tray-piece--placed" : ""}`}
+                  className={`playable-tray-piece${selected ? " playable-tray-piece--selected" : ""}${recommended ? " playable-tray-piece--recommended" : ""}${placed ? " playable-tray-piece--placed" : ""}`}
                   data-testid={`tray-${pieceId}`}
                   disabled={inputLocked}
                   key={pieceId}
                   onClick={() => {
                     ensureRunStarted(pieceId);
                     setSelectedPiece(pieceId);
-                    setMessage(`${member.publicName} selected. Now tap a gold cell—or drag it into the elevator.`);
+                    const quip = member.selectionLines[(game.actionLog.length + index) % member.selectionLines.length];
+                    setSelectionQuip(quip);
+                    setMessage(`${member.publicName}, ${SHAPE_LABELS[pieceId]} selected. “${quip}” Now tap a gold square.`);
                   }}
                   onPointerDown={(event) => beginDrag(event, pieceId)}
                   ref={index === 0 ? firstPieceRef : undefined}
                   type="button"
                 >
                   <span aria-hidden="true" className="playable-tray-piece__number">{index + 1}</span>
+                  <PieceShape
+                    aria-label={`${member.publicName} uses a ${SHAPE_LABELS[pieceId]}`}
+                    className="playable-tray-piece__shape"
+                    pieceId={pieceId}
+                    rotation={rotations[pieceId]}
+                  />
                   <span className="playable-tray-piece__art" style={{ transform: `rotate(${rotations[pieceId]}deg)` }}>
                     <PieceArt pieceId={pieceId} shiftId={shiftId} />
                   </span>
                   <span className="playable-tray-piece__copy">
                     <strong>{member.publicName}</strong>
                     <small>{placed ? "Loaded · drag to move" : member.note}</small>
-                    <em className="playable-tray-piece__cue">{placed ? "IN ELEVATOR" : selected ? "SELECTED · TAP A GOLD CELL" : "DRAG OR TAP"}</em>
+                    <em className="playable-tray-piece__cue">
+                      {placed ? "IN ELEVATOR" : selected ? `HOLDING ${SHAPE_LABELS[pieceId].toUpperCase()}` : recommended ? "1 · TAP THIS SHAPE" : SHAPE_LABELS[pieceId]}
+                    </em>
                   </span>
                   <b>{rotations[pieceId]}°</b>
                 </button>
@@ -1401,11 +1817,21 @@ export function PlayableElevator() {
           </div>
 
           <div className="playable-controls" aria-label="Game controls">
-            <button data-testid="rotate-control" disabled={inputLocked} onClick={rotateSelected} type="button">
+            <button
+              className="playable-controls__hint"
+              data-testid="hint-control"
+              disabled={inputLocked || hintUsed}
+              onClick={requestHrHint}
+              type="button"
+            >
+              <span>{hintUsed ? "HR USED" : "ASK HR"}</span>
+              <small>{hintUsed ? "+5.0s filed" : "Hint · +5.0s"}</small>
+            </button>
+            <button data-testid="rotate-control" disabled={inputLocked || !selectedPiece} onClick={rotateSelected} type="button">
               <span>ROTATE</span>
               <small>Selected piece</small>
             </button>
-            <button data-testid="undo-control" disabled={!game.history.length} onClick={undoLastMove} type="button">
+            <button data-testid="undo-control" disabled={!game.history.length || placementPending} onClick={undoLastMove} type="button">
               <span>UNDO</span>
               <small>Last move</small>
             </button>

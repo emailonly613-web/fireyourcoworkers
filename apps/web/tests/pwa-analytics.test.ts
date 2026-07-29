@@ -156,6 +156,7 @@ describe("anonymous analytics adapter", () => {
       "page_view",
       "play_started",
       "first_piece_grabbed",
+      "hint_requested",
       "valid_drop",
       "invalid_drop",
       "level_completed",

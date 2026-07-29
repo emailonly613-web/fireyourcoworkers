@@ -57,8 +57,8 @@ export const MANDATORY_ELEVATOR_MEETING_LEVEL: LevelDefinition = Object.freeze({
   publicBrand: "Fire Your Coworkers",
   title: "Mandatory Elevator Meeting",
   briefing:
-    "Fit the entire mandatory meeting into the elevator without blocking the controls or stacking coworkers through each other.",
-  completionLine: "Elevator full. Technically legal.",
+    "Pack two coworkers and one workplace hazard into the elevator. The hazard becomes evidence; HR still makes you fire one coworker. Reach 100% exposure and HR fires you.",
+  completionLine: "Elevator full. The equipment is evidence. Pick a coworker to fire.",
   grid: Object.freeze({ width: 6, height: 6 }),
   blockedCells: Object.freeze([
     cell(5, 0),

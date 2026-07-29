@@ -16,9 +16,13 @@ const reviewSource = readFileSync(
 const gameCss = readFileSync(resolve(webRoot, "app/game.css"), "utf8");
 
 describe("fictional termination payoff", () => {
-  it("gives every launch character a safe authored ending", () => {
+  it("defines exactly two fireable coworkers and one equipment exhibit per shift", () => {
     for (const shift of SHIFTS) {
-      for (const pieceId of PIECE_IDS) {
+      const coworkers = PIECE_IDS.filter((pieceId) => shift.cast[pieceId].kind === "coworker");
+      const equipment = PIECE_IDS.filter((pieceId) => shift.cast[pieceId].kind === "equipment");
+      expect(coworkers).toHaveLength(2);
+      expect(equipment).toHaveLength(1);
+      for (const pieceId of coworkers) {
         const member = shift.cast[pieceId];
         expect(member.terminationReason.length).toBeGreaterThan(12);
         expect(member.terminationLine.length).toBeGreaterThan(12);
@@ -27,9 +31,12 @@ describe("fictional termination payoff", () => {
   });
 
   it("requires a fictional cast choice before exposing the dominant share action", () => {
-    expect(playableSource).toContain("THE ELEVATOR IS FULL. HR NEEDS ONE NAME.");
+    expect(playableSource).toContain("THE HAZARD CAUSED THE MESS. HR STILL NEEDS A HUMAN NAME.");
+    expect(playableSource).toContain('kind === "coworker"');
+    expect(playableSource).toContain("EXHIBIT A · NOT AN EMPLOYEE");
+    expect(playableSource).toContain("Machines get repaired. People get blamed.");
     expect(playableSource).toContain('data-testid={`fire-${pieceId}`}');
-    expect(playableSource).toContain("Fictional office archetypes only");
+    expect(playableSource).toContain("Only fictional coworkers can be fired");
     expect(playableSource).toContain("firedPieceId={firedPieceId}");
     expect(playableSource).toContain("elapsedMs={completedElapsedMs ?? 1}");
   });
@@ -49,7 +56,9 @@ describe("fictional termination payoff", () => {
   it("starts the challenge clock on first interaction and keeps onboarding available", () => {
     expect(playableSource).not.toContain("if (incomingChallenge) return;");
     expect(playableSource).not.toContain("Date.now()");
-    expect(playableSource).toContain("startedAtRef.current = window.performance.now();");
+    expect(playableSource).toContain("const startedAt = window.performance.now();");
+    expect(playableSource).toContain("startedAtRef.current = startedAt;");
+    expect(playableSource).toContain("setRunStartedAt(startedAt);");
     expect(playableSource).toContain("ensureRunStarted(selectedPiece);");
     expect(playableSource).toContain("ensureRunStarted(pieceId);");
     expect(playableSource).toContain("firstPieceRef.current?.focus");

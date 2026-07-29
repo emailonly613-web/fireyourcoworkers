@@ -264,6 +264,11 @@ describe("Checkpoint 6 anonymous analytics contract", () => {
       level_id: "floor_001",
       piece_id: "micro-managing-ceo",
     });
+    trackAnalyticsEvent("hint_requested", {
+      level_id: "floor_001",
+      piece_id: "sleeping-intern",
+      result: "placement",
+    });
     trackAnalyticsEvent("valid_drop", {
       level_id: "floor_001",
       piece_id: "sleeping-intern",
@@ -323,11 +328,11 @@ describe("Checkpoint 6 anonymous analytics contract", () => {
 
     const events = getBufferedAnalyticsEvents();
     expect(events.map(({ event }) => event)).toEqual(ANALYTICS_EVENT_NAMES);
-    expect(events).toHaveLength(13);
-    expect(analyticsGlobal.dataLayer).toHaveLength(13);
+    expect(events).toHaveLength(14);
+    expect(analyticsGlobal.dataLayer).toHaveLength(14);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(events[1]?.properties.level_id).toBe("floor_001");
-    expect(events[4]?.properties).toEqual({
+    expect(events[5]?.properties).toEqual({
       level_id: "floor_001",
       move_number: 0,
       reason: "overlap",
