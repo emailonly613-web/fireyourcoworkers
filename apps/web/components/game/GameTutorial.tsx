@@ -76,7 +76,7 @@ export function GameTutorial({
       </ol>
 
       <div className="playable-tutorial__tip">
-        <strong>Phone shortcut:</strong> dragging is optional. Tap a piece, then tap its destination.
+        <strong>Phone shortcut:</strong> dragging is optional. Tap a piece, then tap the gold square where its top-left corner should start.
       </div>
 
       <button

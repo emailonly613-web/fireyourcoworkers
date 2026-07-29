@@ -285,6 +285,12 @@ describe("Checkpoint 6 anonymous analytics contract", () => {
       elapsed_ms: 1200,
       score: 28,
     });
+    trackAnalyticsEvent("fired_character_selected", {
+      level_id: "floor_001",
+      piece_id: "micro-managing-ceo",
+      shift_id: "founders-floor",
+      elapsed_ms: 1_500,
+    });
     trackAnalyticsEvent("lawsuit_triggered", {
       level_id: "floor_001",
       rule_id: "unsafe-equipment-stacking",
@@ -317,8 +323,8 @@ describe("Checkpoint 6 anonymous analytics contract", () => {
 
     const events = getBufferedAnalyticsEvents();
     expect(events.map(({ event }) => event)).toEqual(ANALYTICS_EVENT_NAMES);
-    expect(events).toHaveLength(12);
-    expect(analyticsGlobal.dataLayer).toHaveLength(12);
+    expect(events).toHaveLength(13);
+    expect(analyticsGlobal.dataLayer).toHaveLength(13);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(events[1]?.properties.level_id).toBe("floor_001");
     expect(events[4]?.properties).toEqual({

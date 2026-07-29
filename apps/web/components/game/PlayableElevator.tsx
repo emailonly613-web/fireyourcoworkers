@@ -128,6 +128,11 @@ function isBetterResult(candidate: PersonalBest, current: PersonalBest | null) {
     (candidate.score === current.score && candidate.moves < current.moves);
 }
 
+function formatElapsedTime(elapsedMs: number | null | undefined) {
+  if (!elapsedMs) return "—";
+  return `${(elapsedMs / 1_000).toFixed(1)}s`;
+}
+
 function readPersonalBest(shiftId: ShiftId): PersonalBest | null {
   try {
     const value = window.localStorage.getItem(`${BEST_STORAGE_PREFIX}:${shiftId}`);
@@ -249,6 +254,8 @@ export function PlayableElevator() {
   const [incident, setIncident] = useState<IncidentBeat | null>(null);
   const [cleanStreak, setCleanStreak] = useState(0);
   const [resultReveal, setResultReveal] = useState(false);
+  const [completedElapsedMs, setCompletedElapsedMs] = useState<number | null>(null);
+  const [firedPieceId, setFiredPieceId] = useState<PieceId | null>(null);
   const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
   const [isNewPersonalBest, setIsNewPersonalBest] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -260,6 +267,7 @@ export function PlayableElevator() {
   );
   const boardRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const firstPieceRef = useRef<HTMLButtonElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const tutorialTriggerRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -267,7 +275,7 @@ export function PlayableElevator() {
   const completionTrackedRef = useRef(false);
   const invalidAttemptCounterRef = useRef(0);
   const lawsuitEpisodeTrackedRef = useRef(false);
-  const startedAtRef = useRef(Date.now());
+  const startedAtRef = useRef(0);
   const incidentSerialRef = useRef(0);
   const resultRevealTimerRef = useRef<number | null>(null);
 
@@ -288,9 +296,21 @@ export function PlayableElevator() {
   const placedCount = Object.keys(game.placements).length;
   const attemptMoves = game.actionLog.length;
   const challengeVerdict = solved && challengeTarget
-    ? compareChallengeResult(challengeTarget, { moves: attemptMoves, score: hr.score })
+    ? compareChallengeResult(challengeTarget, {
+        elapsedMs: completedElapsedMs ?? undefined,
+        moves: attemptMoves,
+        score: hr.score,
+      })
     : null;
   const shift = useMemo(() => getShift(shiftId), [shiftId]);
+  const firedMember = firedPieceId ? shift.cast[firedPieceId] : null;
+  const resultShareLabel = challengeVerdict === "beat"
+    ? "SEND THE RECEIPT"
+    : challengeVerdict === "tied"
+    ? "DEMAND A REMATCH"
+    : challengeVerdict === "missed"
+    ? "FILE AN APPEAL"
+    : "SEND TERMINATION NOTICE";
   const topViolation = useMemo(
     () => [...hr.activeViolations].sort((a, b) => b.score - a.score)[0],
     [hr.activeViolations],
@@ -339,7 +359,6 @@ export function PlayableElevator() {
       setTutorialOpen(true);
       return;
     }
-    if (incomingChallenge) return;
     if (!shouldShowTutorial()) return;
 
     if (typeof IntersectionObserver !== "function") {
@@ -383,11 +402,19 @@ export function PlayableElevator() {
     return () => window.cancelAnimationFrame(frame);
   }, [resultReveal]);
 
+  useEffect(() => {
+    if (!firedPieceId) return;
+    const frame = window.requestAnimationFrame(() => {
+      resultRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [firedPieceId]);
+
   const dismissTutorial = () => {
     markTutorialSeen();
     setTutorialOpen(false);
     window.setTimeout(() => {
-      tutorialTriggerRef.current?.focus({ preventScroll: true });
+      firstPieceRef.current?.focus({ preventScroll: true });
       stageRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
     }, 0);
   };
@@ -482,25 +509,29 @@ export function PlayableElevator() {
     return previewPlacement(game, pieceId, { rotation, x, y });
   };
 
+  const ensureRunStarted = (pieceId: PieceId) => {
+    if (firstGrabTrackedRef.current) return;
+    firstGrabTrackedRef.current = true;
+    startedAtRef.current = window.performance.now();
+    trackAnalyticsEvent("first_piece_grabbed", {
+      level_id: game.level.id,
+      piece_id: pieceId,
+    });
+    if (challengeTarget) {
+      trackAnalyticsEvent("play_started", {
+        level_id: game.level.id,
+        source: "challenge",
+      });
+    }
+  };
+
   const beginDrag = (event: ReactPointerEvent<HTMLButtonElement>, pieceId: PieceId) => {
     if (inputLocked) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const rotation = game.placements[pieceId]?.rotation ?? rotations[pieceId];
     setSelectedPiece(pieceId);
-    if (!firstGrabTrackedRef.current) {
-      firstGrabTrackedRef.current = true;
-      trackAnalyticsEvent("first_piece_grabbed", {
-        level_id: game.level.id,
-        piece_id: pieceId,
-      });
-      if (challengeTarget) {
-        trackAnalyticsEvent("play_started", {
-          level_id: game.level.id,
-          source: "challenge",
-        });
-      }
-    }
+    ensureRunStarted(pieceId);
     const nextDrag = {
       moved: false,
       pieceId,
@@ -647,6 +678,9 @@ export function PlayableElevator() {
       move_number: result.state.actionLog.length,
     });
     if (isSolved(result.state) && !nextHr.lawsuit && !completionTrackedRef.current) {
+      const elapsedMs = Math.max(1, Math.round(window.performance.now() - startedAtRef.current));
+      setCompletedElapsedMs(elapsedMs);
+      setFiredPieceId(null);
       setResultReveal(false);
       if (resultRevealTimerRef.current !== null) {
         window.clearTimeout(resultRevealTimerRef.current);
@@ -680,7 +714,7 @@ export function PlayableElevator() {
 
       completionTrackedRef.current = true;
       trackAnalyticsEvent("level_completed", {
-        elapsed_ms: Date.now() - startedAtRef.current,
+        elapsed_ms: elapsedMs,
         level_id: game.level.id,
         move_count: result.state.actionLog.length,
         score: nextHr.score,
@@ -691,6 +725,7 @@ export function PlayableElevator() {
           level_id: game.level.id,
           move_count: result.state.actionLog.length,
           outcome: compareChallengeResult(challengeTarget, {
+            elapsedMs,
             moves: result.state.actionLog.length,
             score: nextHr.score,
           }),
@@ -731,6 +766,7 @@ export function PlayableElevator() {
 
   const placeFromCell = (cell: Cell) => {
     if (inputLocked) return;
+    ensureRunStarted(selectedPiece);
     const rotation = game.placements[selectedPiece]?.rotation ?? rotations[selectedPiece];
     finishPlacement(
       selectedPiece,
@@ -743,6 +779,7 @@ export function PlayableElevator() {
       if (hr.lawsuit) setMessage("Rotation is frozen. Undo or restart to answer Legal.");
       return;
     }
+    ensureRunStarted(selectedPiece);
     const currentRotation = game.placements[selectedPiece]?.rotation ?? rotations[selectedPiece];
     const nextRotation = normalizeRotation(currentRotation + 90);
     const placement = game.placements[selectedPiece];
@@ -774,6 +811,8 @@ export function PlayableElevator() {
     completionTrackedRef.current = false;
     setCleanStreak(0);
     setResultReveal(false);
+    setCompletedElapsedMs(null);
+    setFiredPieceId(null);
     if (resultRevealTimerRef.current !== null) {
       window.clearTimeout(resultRevealTimerRef.current);
       resultRevealTimerRef.current = null;
@@ -795,7 +834,7 @@ export function PlayableElevator() {
     firstGrabTrackedRef.current = false;
     invalidAttemptCounterRef.current = 0;
     lawsuitEpisodeTrackedRef.current = false;
-    startedAtRef.current = Date.now();
+    startedAtRef.current = 0;
     setPreview(null);
     setRejectedPreview(null);
     setAcceptedPreview(null);
@@ -806,6 +845,8 @@ export function PlayableElevator() {
     setIncident(null);
     setCleanStreak(0);
     setResultReveal(false);
+    setCompletedElapsedMs(null);
+    setFiredPieceId(null);
     if (resultRevealTimerRef.current !== null) {
       window.clearTimeout(resultRevealTimerRef.current);
       resultRevealTimerRef.current = null;
@@ -825,7 +866,7 @@ export function PlayableElevator() {
     firstGrabTrackedRef.current = false;
     invalidAttemptCounterRef.current = 0;
     lawsuitEpisodeTrackedRef.current = false;
-    startedAtRef.current = Date.now();
+    startedAtRef.current = 0;
     setPreview(null);
     setRejectedPreview(null);
     setAcceptedPreview(null);
@@ -835,12 +876,35 @@ export function PlayableElevator() {
     setIncident(null);
     setCleanStreak(0);
     setResultReveal(false);
+    setCompletedElapsedMs(null);
+    setFiredPieceId(null);
     if (resultRevealTimerRef.current !== null) {
       window.clearTimeout(resultRevealTimerRef.current);
       resultRevealTimerRef.current = null;
     }
     setIsNewPersonalBest(false);
     setMessage(`${getShift(nextShiftId).title} clocked in. Pick a coworker and start packing.`);
+  };
+
+  const fireCoworker = (pieceId: PieceId) => {
+    if (!solved || hr.lawsuit || firedPieceId) return;
+    const member = getCastMember(shiftId, pieceId);
+    const elapsedMs = completedElapsedMs ?? Math.max(
+      1,
+      Math.round(window.performance.now() - startedAtRef.current),
+    );
+    setFiredPieceId(pieceId);
+    setMessage(`${member.publicName} terminated. ${member.terminationLine}`);
+    playTone("failure");
+    if (!(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false)) {
+      navigator.vibrate?.([35, 28, 95]);
+    }
+    trackAnalyticsEvent("fired_character_selected", {
+      elapsed_ms: elapsedMs,
+      level_id: game.level.id,
+      piece_id: pieceId,
+      shift_id: shiftId,
+    });
   };
 
   const gridCells = Array.from(
@@ -903,9 +967,18 @@ export function PlayableElevator() {
 
         {challengeTarget ? (
           <div className="playable-challenge-banner" data-testid="challenge-banner">
-            <b>{getShift(challengeTarget.shiftId ?? DEFAULT_SHIFT_ID).shortTitle} coworker run:</b>
+            <b>
+              {challengeTarget.firedPieceId
+                ? `YOUR COWORKER FIRED THE ${getCastMember(
+                    challengeTarget.shiftId ?? DEFAULT_SHIFT_ID,
+                    challengeTarget.firedPieceId,
+                  ).shortName.toUpperCase()}:`
+                : `${getShift(challengeTarget.shiftId ?? DEFAULT_SHIFT_ID).shortTitle} coworker run:`}
+            </b>
             {challengeTarget.result === "lawsuit"
               ? ` Finish below ${challengeTarget.score}% HR exposure. They lasted ${challengeTarget.moves} moves.`
+              : challengeTarget.elapsedMs
+              ? ` Match ${challengeTarget.score}% HR in ${challengeTarget.moves} moves, then beat ${formatElapsedTime(challengeTarget.elapsedMs)} to overturn it.`
               : ` Lowest HR wins. At equal HR, fewer than ${challengeTarget.moves} moves wins.`}
           </div>
         ) : null}
@@ -1114,58 +1187,102 @@ export function PlayableElevator() {
             <div
               aria-labelledby="performance-review-title"
               aria-live="polite"
-              className={`playable-complete playable-complete--${runVerdict.tone}`}
+              className={`playable-complete playable-complete--${runVerdict.tone}${firedPieceId ? " playable-complete--terminated" : ""}`}
               data-testid="game-complete"
               ref={resultRef}
               role="region"
               tabIndex={-1}
             >
               <div className="playable-complete__fileline">
-                <span>CONFIDENTIAL · PERFORMANCE REVIEW</span>
+                <span>{firedPieceId ? "CONFIDENTIAL · TERMINATION NOTICE" : "CONFIDENTIAL · PERFORMANCE REVIEW"}</span>
                 {isNewPersonalBest ? <em>NEW PERSONAL BEST</em> : null}
               </div>
               <h3 id="performance-review-title">{runVerdict.title}</h3>
-              <p className="playable-complete__kicker">{runVerdict.kicker}</p>
-              <p className="playable-complete__caption">{runVerdict.caption}</p>
-              <div aria-label={`Cast from ${shift.title}`} className="playable-complete__cast">
-                {PIECE_IDS.map((pieceId) => (
-                  <span key={pieceId} title={shift.cast[pieceId].publicName}>
-                    <PieceArt pieceId={pieceId} shiftId={shiftId} />
-                    <b>{shift.cast[pieceId].shortName}</b>
-                  </span>
-                ))}
-              </div>
-              <div className="playable-complete__metrics">
-                <span><b>{hr.score}%</b> HR exposure</span>
-                <span><b>{attemptMoves}</b> moves filed</span>
-                <span><b>×{cleanStreak}</b> clean-fit chain</span>
-              </div>
-              {challengeVerdict && challengeTarget ? (
+              {firedMember ? (
+                <>
+                  <p className="playable-complete__kicker">{runVerdict.kicker}</p>
+                  <p className="playable-complete__caption">{runVerdict.caption}</p>
+                </>
+              ) : null}
+              {!firedMember ? (
+                <section aria-labelledby="firing-decision-title" className="playable-firing-decision">
+                  <p>THE ELEVATOR IS FULL. HR NEEDS ONE NAME.</p>
+                  <h4 id="firing-decision-title">Who caused the paperwork?</h4>
+                  <div aria-label={`Choose one fictional ${shift.title} character to fire`}>
+                    {PIECE_IDS.map((pieceId) => {
+                      const member = shift.cast[pieceId];
+                      return (
+                        <button
+                          data-testid={`fire-${pieceId}`}
+                          key={pieceId}
+                          onClick={() => fireCoworker(pieceId)}
+                          type="button"
+                        >
+                          <span aria-hidden="true"><PieceArt pieceId={pieceId} shiftId={shiftId} /></span>
+                          <b>FIRE {member.shortName.toUpperCase()}</b>
+                          <small>{member.terminationReason}</small>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <small>Fictional office archetypes only. No names, photos, or personal information.</small>
+                </section>
+              ) : (
+                <section aria-live="polite" className="playable-termination" data-testid="termination-result">
+                  <div aria-hidden="true" className="playable-termination__art">
+                    <span className="playable-termination__file-art">
+                      <PieceArt pieceId={firedPieceId as PieceId} shiftId={shiftId} />
+                    </span>
+                    <span className="playable-termination__exit-art">
+                      <PieceArt pieceId={firedPieceId as PieceId} shiftId={shiftId} />
+                    </span>
+                    <strong>FIRED</strong>
+                  </div>
+                  <div className="playable-termination__copy">
+                    <span>TERMINATED FOR CAUSE</span>
+                    <h4>{firedMember.publicName}</h4>
+                    <p>{firedMember.terminationReason}</p>
+                    <em>{firedMember.terminationLine}</em>
+                  </div>
+                </section>
+              )}
+              {firedMember ? (
+                <div className={`playable-complete__metrics${challengeVerdict ? " playable-complete__metrics--challenge" : ""}`}>
+                  {challengeVerdict && challengeTarget ? (
+                    <span className={`playable-complete__challenge-metric playable-complete__challenge--${challengeVerdict}`}>
+                      <b>{challengeVerdict === "beat" ? "BEAT" : challengeVerdict === "tied" ? "TIED" : "MISSED"}</b>
+                      {challengeTarget.score}% · {challengeTarget.moves} · {challengeTarget.elapsedMs ? formatElapsedTime(challengeTarget.elapsedMs) : "legacy"}
+                    </span>
+                  ) : null}
+                  <span><b>{hr.score}%</b> HR exposure</span>
+                  <span><b>{attemptMoves}</b> moves filed</span>
+                  <span><b>{formatElapsedTime(completedElapsedMs)}</b> elapsed</span>
+                </div>
+              ) : null}
+              {challengeVerdict && challengeTarget && !firedMember ? (
                 <p className={`playable-complete__challenge playable-complete__challenge--${challengeVerdict}`}>
                   {challengeVerdict === "beat" ? "CHALLENGE BEATEN" : challengeVerdict === "tied" ? "EXACT TIE" : "TARGET MISSED"}
-                  <small>{challengeTarget.score}% HR · {challengeTarget.moves} moves</small>
+                  <small>
+                    {challengeTarget.score}% HR · {challengeTarget.moves} moves
+                    {challengeTarget.elapsedMs ? ` · ${formatElapsedTime(challengeTarget.elapsedMs)}` : ""}
+                  </small>
                 </p>
               ) : null}
-              <PerformanceReviewActions
-                boardRef={boardRef}
-                moves={attemptMoves}
-                score={hr.score}
-                shift={shift}
-                verdict={runVerdict}
-              />
-              <div className="playable-complete__actions">
-                <ShareChallengeButton
-                  label="CHALLENGE A COWORKER"
-                  moves={game.actionLog.length}
-                  mode="challenge"
-                  result="completed"
-                  score={hr.score}
-                  showCopyFallback
-                  shiftId={shiftId}
-                  surface="completion"
-                />
-                <button onClick={restartLevel} type="button">PLAY AGAIN</button>
-              </div>
+              {firedMember && firedPieceId ? (
+                <div className="playable-complete__share-row">
+                  <PerformanceReviewActions
+                    boardRef={boardRef}
+                    elapsedMs={completedElapsedMs ?? 1}
+                    firedPieceId={firedPieceId}
+                    moves={attemptMoves}
+                    primaryLabel={resultShareLabel}
+                    score={hr.score}
+                    shift={shift}
+                    verdict={runVerdict}
+                  />
+                  <button onClick={restartLevel} type="button">PLAY AGAIN</button>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -1260,10 +1377,12 @@ export function PlayableElevator() {
                   disabled={inputLocked}
                   key={pieceId}
                   onClick={() => {
+                    ensureRunStarted(pieceId);
                     setSelectedPiece(pieceId);
                     setMessage(`${member.publicName} selected. Now tap a gold cell—or drag it into the elevator.`);
                   }}
                   onPointerDown={(event) => beginDrag(event, pieceId)}
+                  ref={index === 0 ? firstPieceRef : undefined}
                   type="button"
                 >
                   <span aria-hidden="true" className="playable-tray-piece__number">{index + 1}</span>

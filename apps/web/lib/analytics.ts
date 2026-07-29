@@ -5,6 +5,7 @@ export const ANALYTICS_EVENT_NAMES = [
   "valid_drop",
   "invalid_drop",
   "level_completed",
+  "fired_character_selected",
   "lawsuit_triggered",
   "replay_viewed",
   "install_cta_selected",
@@ -44,6 +45,12 @@ export interface AnalyticsEventPayloadMap {
     elapsed_ms: number;
     score?: number;
     shift_id?: string;
+  };
+  fired_character_selected: {
+    level_id: string;
+    piece_id: string;
+    shift_id: string;
+    elapsed_ms: number;
   };
   lawsuit_triggered: { level_id: string; rule_id: string; shift_id?: string; strike_count: number };
   replay_viewed: { level_id: string; source: ReplaySource };
@@ -151,6 +158,12 @@ const EVENT_FIELDS: Record<AnalyticsEventName, Record<string, FieldRule>> = {
     elapsed_ms: { type: "number", max: 86_400_000 },
     score: { type: "number", max: 1_000_000_000 },
     shift_id: IDENTIFIER,
+  },
+  fired_character_selected: {
+    level_id: IDENTIFIER,
+    piece_id: IDENTIFIER,
+    shift_id: IDENTIFIER,
+    elapsed_ms: { type: "number", max: 86_400_000 },
   },
   lawsuit_triggered: {
     level_id: IDENTIFIER,

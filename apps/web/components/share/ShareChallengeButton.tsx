@@ -9,6 +9,7 @@ import {
 } from "@/lib/share";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { ShiftId } from "@/game/cast";
+import type { PieceId } from "@/game";
 
 type ShareSurface = "hero" | "game" | "completion" | "lawsuit";
 
@@ -16,6 +17,8 @@ export function ShareChallengeButton({
   className = "",
   label = "SHARE GAME",
   mode = "site",
+  elapsedMs,
+  firedPieceId,
   moves = 0,
   result = "completed",
   score = 0,
@@ -26,6 +29,8 @@ export function ShareChallengeButton({
   className?: string;
   label?: string;
   mode?: "site" | "challenge";
+  elapsedMs?: number;
+  firedPieceId?: PieceId;
   moves?: number;
   result?: ShareResult;
   score?: number;
@@ -54,7 +59,15 @@ export function ShareChallengeButton({
     setManualUrl(null);
 
     const payload = mode === "challenge"
-      ? buildSharePayload({ moves, origin: window.location.origin, result, score, shiftId })
+      ? buildSharePayload({
+          elapsedMs,
+          firedPieceId,
+          moves,
+          origin: window.location.origin,
+          result,
+          score,
+          shiftId,
+        })
       : buildSiteSharePayload(window.location.origin);
     const delivery = await deliverShare(payload, {
       nativeShare:

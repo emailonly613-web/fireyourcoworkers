@@ -194,6 +194,91 @@ describe("Floor 1 share payload", () => {
     expect(parseChallengeTarget(`${url.search}&shift=untrusted`)).toBeNull();
   });
 
+  it("carries a safe elapsed-time target and the fired fictional cast member", () => {
+    const payload = buildSharePayload({
+      elapsedMs: 12_650,
+      firedPieceId: "micro-managing-ceo",
+      moves: 3,
+      origin: "https://fireyourcoworkers.com",
+      result: "completed",
+      score: 28,
+      shiftId: "after-hours-engineering",
+    });
+    const url = new URL(payload.url);
+
+    expect(url.searchParams.get("target_ms")).toBe("12650");
+    expect(url.searchParams.get("fired")).toBe("micro-managing-ceo");
+    expect(payload.text).toContain("I fired the Director");
+    expect(payload.text).not.toContain("the The");
+    expect(payload.text).toContain("After Hours shift");
+    expect(parseChallengeTarget(url.search)).toEqual({
+      elapsedMs: 12_650,
+      firedPieceId: "micro-managing-ceo",
+      floorVersion: "v1",
+      levelId: "mandatory-elevator-meeting",
+      moves: 3,
+      result: "completed",
+      score: 28,
+      shiftId: "after-hours-engineering",
+    });
+  });
+
+  it("keeps elapsed time and fired identity optional for legacy completed links", () => {
+    const legacy = parseChallengeTarget(
+      "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=28&target_moves=3&outcome=completed&shift=founders-floor",
+    );
+
+    expect(legacy).toEqual({
+      floorVersion: "v1",
+      levelId: "mandatory-elevator-meeting",
+      moves: 3,
+      result: "completed",
+      score: 28,
+      shiftId: "founders-floor",
+    });
+    expect(legacy).not.toHaveProperty("elapsedMs");
+    expect(legacy).not.toHaveProperty("firedPieceId");
+  });
+
+  it("rejects duplicate, unsafe, or lawsuit-only elapsed and fired parameters", () => {
+    const completed =
+      "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=28&target_moves=3&outcome=completed";
+    const lawsuit =
+      "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=100&target_moves=5&outcome=lawsuit";
+
+    expect(parseChallengeTarget(`${completed}&target_ms=12000&target_ms=11999`)).toBeNull();
+    expect(parseChallengeTarget(`${completed}&target_ms=0`)).toBeNull();
+    expect(parseChallengeTarget(`${completed}&target_ms=12.5`)).toBeNull();
+    expect(parseChallengeTarget(`${completed}&target_ms=86400001`)).toBeNull();
+    expect(parseChallengeTarget(`${completed}&fired=sleeping-intern&fired=broken-copy-machine`)).toBeNull();
+    expect(parseChallengeTarget(`${completed}&fired=untrusted-coworker`)).toBeNull();
+    expect(parseChallengeTarget(`${completed}&fired=%3Cscript%3E`)).toBeNull();
+    expect(parseChallengeTarget(`${lawsuit}&target_ms=12000`)).toBeNull();
+    expect(parseChallengeTarget(`${lawsuit}&fired=micro-managing-ceo`)).toBeNull();
+
+    expect(() => buildSharePayload({
+      elapsedMs: 0,
+      moves: 3,
+      origin: "https://fireyourcoworkers.com",
+      result: "completed",
+      score: 28,
+    })).toThrow(RangeError);
+    expect(() => buildSharePayload({
+      elapsedMs: 12_000,
+      moves: 5,
+      origin: "https://fireyourcoworkers.com",
+      result: "lawsuit",
+      score: 100,
+    })).toThrow(TypeError);
+    expect(() => buildSharePayload({
+      firedPieceId: "real-person" as never,
+      moves: 3,
+      origin: "https://fireyourcoworkers.com",
+      result: "completed",
+      score: 28,
+    })).toThrow(TypeError);
+  });
+
   it("compares challenge results by lower HR exposure, then fewer moves", () => {
     const target = parseChallengeTarget(
       "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=42&target_moves=5&outcome=completed",
@@ -203,6 +288,30 @@ describe("Floor 1 share payload", () => {
     expect(compareChallengeResult(target!, { score: 42, moves: 4 })).toBe("beat");
     expect(compareChallengeResult(target!, { score: 42, moves: 5 })).toBe("tied");
     expect(compareChallengeResult(target!, { score: 43, moves: 3 })).toBe("missed");
+  });
+
+  it("uses elapsed time only after HR exposure and move count tie", () => {
+    const target = parseChallengeTarget(
+      "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=28&target_moves=3&target_ms=12000&outcome=completed",
+    );
+    expect(target).not.toBeNull();
+
+    expect(compareChallengeResult(target!, { score: 28, moves: 3, elapsedMs: 11_999 })).toBe("beat");
+    expect(compareChallengeResult(target!, { score: 28, moves: 3, elapsedMs: 12_000 })).toBe("tied");
+    expect(compareChallengeResult(target!, { score: 28, moves: 3, elapsedMs: 12_001 })).toBe("missed");
+    expect(compareChallengeResult(target!, { score: 27, moves: 20, elapsedMs: 99_999 })).toBe("beat");
+    expect(compareChallengeResult(target!, { score: 28, moves: 2, elapsedMs: 99_999 })).toBe("beat");
+    expect(compareChallengeResult(target!, { score: 29, moves: 2, elapsedMs: 1 })).toBe("missed");
+    expect(compareChallengeResult(target!, { score: 28, moves: 3 })).toBe("tied");
+
+    const legacyTarget = parseChallengeTarget(
+      "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=28&target_moves=3&outcome=completed",
+    );
+    expect(compareChallengeResult(legacyTarget!, {
+      elapsedMs: 1,
+      moves: 3,
+      score: 28,
+    })).toBe("tied");
   });
 });
 

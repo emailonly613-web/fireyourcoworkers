@@ -159,6 +159,7 @@ describe("anonymous analytics adapter", () => {
       "valid_drop",
       "invalid_drop",
       "level_completed",
+      "fired_character_selected",
       "lawsuit_triggered",
       "replay_viewed",
       "install_cta_selected",
@@ -232,6 +233,29 @@ describe("anonymous analytics adapter", () => {
       score: 1_000_000_000,
       shift_id: "after-hours-engineering",
     });
+  });
+
+  it("records only fictional firing identifiers and timing", () => {
+    const record = trackAnalyticsEvent(
+      "fired_character_selected",
+      {
+        level_id: " FLOOR_001 ",
+        piece_id: " MICRO-MANAGING-CEO ",
+        shift_id: " FOUNDERS-FLOOR ",
+        elapsed_ms: 1_225.6,
+        display_name: "A Real Coworker",
+        email: "coworker@example.com",
+      } as never,
+    );
+
+    expect(record?.properties).toEqual({
+      level_id: "floor_001",
+      piece_id: "micro-managing-ceo",
+      shift_id: "founders-floor",
+      elapsed_ms: 1_226,
+    });
+    expect(JSON.stringify(record)).not.toContain("A Real Coworker");
+    expect(JSON.stringify(record)).not.toContain("coworker@example.com");
   });
 
   it("does not let an optional sink failure interrupt gameplay", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { PIECE_IDS, type PieceId } from "@/game";
+import type { PieceId } from "@/game";
 import type { ShiftDefinition } from "@/game/cast";
 import type { RunVerdict } from "@/game/results";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -9,7 +9,10 @@ import { buildSharePayload } from "@/lib/share";
 
 type PerformanceReviewActionsProps = {
   boardRef: RefObject<HTMLDivElement | null>;
+  elapsedMs: number;
+  firedPieceId: PieceId;
   moves: number;
+  primaryLabel: string;
   score: number;
   shift: ShiftDefinition;
   verdict: RunVerdict;
@@ -99,6 +102,8 @@ async function renderCard(
   verdict: RunVerdict,
   score: number,
   moves: number,
+  elapsedMs: number,
+  firedPieceId: PieceId,
 ): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
@@ -141,88 +146,107 @@ async function renderCard(
   context.font = "700 25px Arial, sans-serif";
   context.fillText(shift.title.toUpperCase(), 72, 249);
 
-  roundedRect(context, 54, 294, 972, 470, 30);
+  const firedMember = shift.cast[firedPieceId];
+
+  roundedRect(context, 54, 294, 972, 486, 30);
   context.fillStyle = "rgba(2, 10, 17, .84)";
   context.fill();
-  context.strokeStyle = verdict.tone === "legal" ? "#f0443f" : "#73de42";
+  context.strokeStyle = "#f0443f";
   context.lineWidth = 8;
   context.stroke();
 
-  context.fillStyle = verdict.tone === "legal" ? "#f0443f" : "#73de42";
-  context.font = "900 28px Arial, sans-serif";
-  context.fillText(verdict.tone === "legal" ? "FINAL NOTICE" : "MANAGEMENT ARCHETYPE", 92, 362);
-  context.fillStyle = "#ffffff";
-  context.font = "900 77px Arial, sans-serif";
-  const verdictBottom = drawWrappedText(context, verdict.title, 92, 458, 890, 78, 3);
-  context.fillStyle = "#ffcf3f";
-  context.font = "900 29px Arial, sans-serif";
-  context.fillText(verdict.kicker, 92, Math.max(670, verdictBottom + 42));
-
-  context.fillStyle = "#f6f0df";
-  context.font = "900 28px Arial, sans-serif";
-  context.fillText("TODAY'S MANDATORY ATTENDEES", 72, 840);
-
-  const panelWidth = 292;
-  const panelGap = 24;
-  const castImages = await Promise.all(
-    PIECE_IDS.map(async (pieceId) => {
-      const svg = board.querySelector<SVGElement>(`[data-testid="placed-${pieceId}"] svg`);
-      return svg ? svgToImage(svg) : null;
-    }),
-  );
-
-  PIECE_IDS.forEach((pieceId: PieceId, index) => {
-    const x = 72 + index * (panelWidth + panelGap);
-    roundedRect(context, x, 878, panelWidth, 402, 24);
-    context.fillStyle = index === 1 ? "#18344a" : "#102736";
-    context.fill();
-    context.strokeStyle = "rgba(162, 207, 232, .42)";
-    context.lineWidth = 3;
-    context.stroke();
-
-    const image = castImages[index];
-    if (image) context.drawImage(image, x + 17, 914, panelWidth - 34, 230);
-
-    const member = shift.cast[pieceId];
-    context.fillStyle = "#ffcf3f";
-    context.font = "900 17px Arial, sans-serif";
-    context.fillText(`0${index + 1}`, x + 19, 1177);
-    context.fillStyle = "#ffffff";
-    context.font = "900 24px Arial, sans-serif";
-    drawWrappedText(context, member.publicName.toUpperCase(), x + 19, 1214, panelWidth - 38, 27, 2);
-  });
-
-  roundedRect(context, 72, 1330, 446, 172, 24);
-  context.fillStyle = "#ffcf3f";
-  context.fill();
-  context.fillStyle = "#06111b";
-  context.font = "900 25px Arial, sans-serif";
-  context.fillText("HR EXPOSURE", 104, 1382);
-  context.font = "900 72px Arial, sans-serif";
-  context.fillText(`${score}%`, 104, 1470);
-
-  roundedRect(context, 562, 1330, 446, 172, 24);
   context.fillStyle = "#f0443f";
-  context.fill();
+  context.font = "900 28px Arial, sans-serif";
+  context.fillText("TERMINATION NOTICE", 92, 362);
   context.fillStyle = "#ffffff";
-  context.font = "900 25px Arial, sans-serif";
-  context.fillText("MOVES FILED", 594, 1382);
-  context.font = "900 72px Arial, sans-serif";
-  context.fillText(String(moves), 594, 1470);
+  context.font = "900 58px Arial, sans-serif";
+  context.fillText("I FIRED THE", 92, 446);
+  context.font = "900 76px Arial, sans-serif";
+  const firedTitleBottom = drawWrappedText(
+    context,
+    firedMember.shortName.toUpperCase(),
+    92,
+    536,
+    890,
+    78,
+    2,
+  );
+  context.fillStyle = "#ffcf3f";
+  context.font = "900 27px Arial, sans-serif";
+  context.fillText(verdict.kicker, 92, Math.min(734, firedTitleBottom + 48));
+
+  roundedRect(context, 72, 830, 936, 450, 26);
+  context.fillStyle = "#102736";
+  context.fill();
+  context.strokeStyle = "rgba(162, 207, 232, .42)";
+  context.lineWidth = 3;
+  context.stroke();
+
+  const firedSvg = board.querySelector<SVGElement>(`[data-testid="placed-${firedPieceId}"] svg`);
+  const firedImage = firedSvg ? await svgToImage(firedSvg) : null;
+  if (firedImage) context.drawImage(firedImage, 86, 866, 474, 330);
+
+  context.save();
+  context.translate(325, 1070);
+  context.rotate(-0.17);
+  context.fillStyle = "rgba(128, 10, 17, .93)";
+  context.fillRect(-142, -55, 284, 110);
+  context.strokeStyle = "#ff665c";
+  context.lineWidth = 8;
+  context.strokeRect(-142, -55, 284, 110);
+  context.fillStyle = "#ffffff";
+  context.font = "900 68px Arial, sans-serif";
+  context.textAlign = "center";
+  context.fillText("FIRED", 0, 25);
+  context.restore();
+
+  context.fillStyle = "#f0443f";
+  context.font = "900 22px Arial, sans-serif";
+  context.fillText("CAUSE", 590, 894);
+  context.fillStyle = "#ffffff";
+  context.font = "900 35px Arial, sans-serif";
+  const causeBottom = drawWrappedText(context, firedMember.terminationReason, 590, 946, 366, 42, 3);
+  context.fillStyle = "#ffcf3f";
+  context.font = "900 20px Arial, sans-serif";
+  context.fillText("MANAGEMENT ARCHETYPE", 590, Math.max(1110, causeBottom + 54));
+  context.fillStyle = "#ffffff";
+  context.font = "900 29px Arial, sans-serif";
+  drawWrappedText(context, verdict.title, 590, Math.max(1154, causeBottom + 98), 366, 34, 3);
+
+  const metricWidth = 296;
+  const metricGap = 24;
+  const metricY = 1330;
+  const drawMetric = (x: number, fill: string, label: string, value: string) => {
+    roundedRect(context, x, metricY, metricWidth, 170, 24);
+    context.fillStyle = fill;
+    context.fill();
+    context.fillStyle = fill === "#ffcf3f" ? "#06111b" : "#ffffff";
+    context.font = "900 23px Arial, sans-serif";
+    context.fillText(label, x + 26, metricY + 51);
+    context.font = "900 59px Arial, sans-serif";
+    context.fillText(value, x + 26, metricY + 133);
+  };
+
+  drawMetric(72, "#ffcf3f", "HR EXPOSURE", `${score}%`);
+  drawMetric(72 + metricWidth + metricGap, "#f0443f", "MOVES FILED", String(moves));
+  drawMetric(72 + (metricWidth + metricGap) * 2, "#245f88", "ELAPSED", `${(elapsedMs / 1_000).toFixed(1)}s`);
 
   context.fillStyle = "#f6f0df";
-  context.font = "700 37px Arial, sans-serif";
-  drawWrappedText(context, verdict.caption, 72, 1590, 934, 48, 3);
+  context.font = "700 36px Arial, sans-serif";
+  drawWrappedText(context, firedMember.terminationLine, 72, 1584, 934, 46, 2);
+  context.fillStyle = "#9eb3c0";
+  context.font = "700 28px Arial, sans-serif";
+  drawWrappedText(context, verdict.caption, 72, 1690, 934, 38, 2);
 
   context.fillStyle = "#73de42";
-  context.font = "900 28px Arial, sans-serif";
-  context.fillText("CAN YOUR COWORKER BEAT THIS?", 72, 1776);
+  context.font = "900 30px Arial, sans-serif";
+  context.fillText("THINK I BLAMED THE WRONG COWORKER?", 72, 1800);
   context.fillStyle = "#ffffff";
-  context.font = "900 34px Arial, sans-serif";
-  context.fillText("FIREYOURCOWORKERS.COM", 72, 1830);
+  context.font = "900 38px Arial, sans-serif";
+  context.fillText("FIREYOURCOWORKERS.COM", 72, 1852);
   context.fillStyle = "#8fa4b2";
   context.font = "700 20px Arial, sans-serif";
-  context.fillText("PACK THE OFFICE · SURVIVE HR · SHARE THE PAPERWORK", 72, 1873);
+  context.fillText("TAKE THE SAME SHIFT · OVERTURN THE FIRING", 72, 1892);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -235,13 +259,17 @@ async function renderCard(
 
 export function PerformanceReviewActions({
   boardRef,
+  elapsedMs,
+  firedPieceId,
   moves,
+  primaryLabel,
   score,
   shift,
   verdict,
 }: PerformanceReviewActionsProps) {
-  const [busy, setBusy] = useState<"share" | "save" | null>(null);
+  const [busy, setBusy] = useState<"share" | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [manualUrl, setManualUrl] = useState<string | null>(null);
   const feedbackTimer = useRef<number | null>(null);
 
   useEffect(() => () => {
@@ -256,7 +284,7 @@ export function PerformanceReviewActions({
 
   const createCard = async () => {
     if (!boardRef.current) throw new Error("The completed elevator is unavailable.");
-    return renderCard(boardRef.current, shift, verdict, score, moves);
+    return renderCard(boardRef.current, shift, verdict, score, moves, elapsedMs, firedPieceId);
   };
 
   const trackReviewShare = (
@@ -278,43 +306,33 @@ export function PerformanceReviewActions({
       try {
         await navigator.clipboard.writeText(challengeUrl);
         trackReviewShare("clipboard", "copied");
-        showFeedback("Card saved and challenge link copied.");
+        showFeedback("Termination notice saved and challenge link copied.");
         return;
       } catch {
-        // The visible challenge button remains available as a manual-copy fallback.
+        // The browser may still expose the downloaded card for manual sharing.
       }
     }
     trackReviewShare("manual", "manual");
-    showFeedback("Card saved. Use Challenge a Coworker to copy the link.");
-  };
-
-  const saveCard = async () => {
-    if (busy) return;
-    setBusy("save");
-    try {
-      const blob = await createCard();
-      downloadBlob(blob, `fire-your-coworkers-${verdict.id}.png`);
-      showFeedback("9:16 performance review saved.");
-    } catch {
-      showFeedback("The card could not be saved in this browser.");
-    } finally {
-      setBusy(null);
-    }
+    setManualUrl(challengeUrl);
+    showFeedback("Notice saved. Your exact challenge link is ready below.");
   };
 
   const shareCard = async () => {
     if (busy) return;
     setBusy("share");
+    setManualUrl(null);
     try {
       const blob = await createCard();
       const payload = buildSharePayload({
+        elapsedMs,
+        firedPieceId,
         moves,
         origin: window.location.origin,
         result: "completed",
         score,
         shiftId: shift.id,
       });
-      const file = new File([blob], `fire-your-coworkers-${verdict.id}.png`, {
+      const file = new File([blob], `fire-your-coworkers-fired-${firedPieceId}.png`, {
         type: "image/png",
       });
       const canShareFile = typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
@@ -323,7 +341,7 @@ export function PerformanceReviewActions({
         try {
           await navigator.share({ ...payload, files: [file] });
           trackReviewShare("web_share", "shared");
-          showFeedback("Performance review shared.");
+          showFeedback("Termination notice shared. The appeal is now their problem.");
         } catch (error) {
           if (error instanceof DOMException && error.name === "AbortError") {
             trackReviewShare("web_share", "canceled");
@@ -350,17 +368,21 @@ export function PerformanceReviewActions({
         onClick={() => void shareCard()}
         type="button"
       >
-        {busy === "share" ? "BUILDING CARD…" : "SHARE 9:16 REVIEW"}
-      </button>
-      <button
-        data-testid="save-review-card"
-        disabled={busy !== null}
-        onClick={() => void saveCard()}
-        type="button"
-      >
-        {busy === "save" ? "SAVING…" : "SAVE CARD"}
+        {busy === "share" ? "BUILDING NOTICE…" : primaryLabel}
       </button>
       {feedback ? <p aria-live="polite" role="status">{feedback}</p> : null}
+      {manualUrl ? (
+        <label className="performance-review-actions__manual">
+          <span>EXACT CHALLENGE LINK · TAP TO SELECT</span>
+          <input
+            aria-label="Exact challenge link"
+            onClick={(event) => event.currentTarget.select()}
+            onFocus={(event) => event.currentTarget.select()}
+            readOnly
+            value={manualUrl}
+          />
+        </label>
+      ) : null}
     </div>
   );
 }

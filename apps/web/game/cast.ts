@@ -19,6 +19,8 @@ export interface CastMember {
   readonly shortName: string;
   readonly note: string;
   readonly department: string;
+  readonly terminationReason: string;
+  readonly terminationLine: string;
   readonly successLines: readonly string[];
   readonly failureLines: readonly string[];
 }
@@ -44,6 +46,8 @@ const FOUNDERS_FLOOR: ShiftDefinition = Object.freeze({
       shortName: "Intern",
       note: "Long, sleepy, surprisingly load-bearing.",
       department: "Unpaid horizontal specialist",
+      terminationReason: "Slept through the entire orientation.",
+      terminationLine: "Exit interview postponed until after the nap.",
       successLines: Object.freeze([
         "…wake me when we get there.",
         "This counts as professional development.",
@@ -61,6 +65,8 @@ const FOUNDERS_FLOOR: ShiftDefinition = Object.freeze({
       shortName: "CEO",
       note: "Wide stance. Wider liability radius.",
       department: "Executive obstruction department",
+      terminationReason: "Occupied the entire middle row.",
+      terminationLine: "Leadership has been right-sized.",
       successLines: Object.freeze([
         "Exactly where I delegated myself.",
         "Great fit. My idea, obviously.",
@@ -78,6 +84,8 @@ const FOUNDERS_FLOOR: ShiftDefinition = Object.freeze({
       shortName: "Copier",
       note: "Rigid equipment. Zero spatial awareness.",
       department: "Operational equipment concern",
+      terminationReason: "Became load-bearing without approval.",
+      terminationLine: "Asset removed from the org chart.",
       successLines: Object.freeze([
         "PLACEMENT ACCEPTED. PAPERWORK PENDING.",
         "PC LOAD LETTER. CAREER LOAD LETTER.",
@@ -104,6 +112,8 @@ const AFTER_HOURS_ENGINEERING: ShiftDefinition = Object.freeze({
       shortName: "Engineer",
       note: "Horizontally scaling since 2:14 a.m.",
       department: "Production incident furniture",
+      terminationReason: "Deployed while technically unconscious.",
+      terminationLine: "Rollback access has been revoked.",
       successLines: Object.freeze([
         "Ship it before I regain judgment.",
         "That passed locally.",
@@ -121,6 +131,8 @@ const AFTER_HOURS_ENGINEERING: ShiftDefinition = Object.freeze({
       shortName: "Director",
       note: "Copies the whole company. Occupies the whole row.",
       department: "Strategic inbox amplification",
+      terminationReason: "Replied all to the elevator.",
+      terminationLine: "Visibility has been reduced to zero.",
       successLines: Object.freeze([
         "Looping in the elevator.",
         "Adding visibility and seventeen people.",
@@ -138,6 +150,8 @@ const AFTER_HOURS_ENGINEERING: ShiftDefinition = Object.freeze({
       shortName: "Coffee",
       note: "Square, essential, and one warning light from mutiny.",
       department: "Employee retention infrastructure",
+      terminationReason: "Kept morale dangerously caffeinated.",
+      terminationLine: "Benefits discontinued immediately.",
       successLines: Object.freeze([
         "MORALE DISPENSED. CUP NOT INCLUDED.",
         "PRODUCTIVITY MODE: QUESTIONABLE.",
