@@ -454,6 +454,17 @@
   clip-path: polygon(0 0, 50% 0, 50% 33.333%, 100% 33.333%, 100% 66.667%, 50% 66.667%, 50% 100%, 0 100%);
 }
 
+/* Match pointer hit-testing to the occupied T cells as well. The parent stays
+   keyboard-focusable, while its visually empty corners cannot intercept a
+   neighboring box or piece. */
+.playable-piece--micro-managing-ceo:not(:disabled) {
+  pointer-events: none;
+}
+
+.playable-piece--micro-managing-ceo:not(:disabled) .playable-piece__art-clip {
+  pointer-events: auto;
+}
+
 .playable-piece__art-wrap {
   align-items: center;
   display: flex;

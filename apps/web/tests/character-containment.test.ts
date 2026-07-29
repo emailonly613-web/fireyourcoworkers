@@ -22,6 +22,15 @@ describe("character artwork containment contract", () => {
     }
   });
 
+  it("limits CEO-slot pointer input to the occupied T cells", () => {
+    expect(gameCss).toMatch(
+      /\.playable-piece--micro-managing-ceo:not\(:disabled\)\s*\{[^}]*pointer-events:\s*none;/s,
+    );
+    expect(gameCss).toMatch(
+      /\.playable-piece--micro-managing-ceo:not\(:disabled\) \.playable-piece__art-clip\s*\{[^}]*pointer-events:\s*auto;/s,
+    );
+  });
+
   it("contains artwork in every other boxed presentation", () => {
     expect(gameCss).toMatch(/\.playable-tray-piece__art\s*\{[^}]*overflow:\s*hidden;/s);
     expect(gameCss).toMatch(/\.playable-complete__cast svg\s*\{[^}]*overflow:\s*hidden;/s);
