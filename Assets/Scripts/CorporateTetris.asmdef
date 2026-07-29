@@ -1,0 +1,18 @@
+{
+  "name": "CorporateTetris",
+  "rootNamespace": "CorporateTetris",
+  "references": [
+    "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Newtonsoft.Json"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

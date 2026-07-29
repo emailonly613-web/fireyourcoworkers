@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "characters": [
+    {
+      "id": "sleeping_intern",
+      "displayName": "The Sleeping Intern",
+      "category": "coworker",
+      "prefabAddress": "OfficeItems/SleepingIntern",
+      "shape": [
+        [1],
+        [1],
+        [1]
+      ],
+      "allowedRotations": [0, 90, 180, 270],
+      "weightClass": "light",
+      "tags": ["human", "employee", "intern", "sleeping"],
+      "animationTriggers": {
+        "grab": "Grabbed",
+        "rotate": "Rotated",
+        "validDrop": "Placed",
+        "invalidDrop": "Rejected"
+      },
+      "voiceLines": {
+        "onGrab": [
+          {
+            "id": "intern_grab_001",
+            "text": "Five more minutes.",
+            "audioAddress": "Audio/Intern/intern_grab_001"
+          }
+        ],
+        "onRotate": [
+          {
+            "id": "intern_rotate_001",
+            "text": "Is this ergonomic?",
+            "audioAddress": "Audio/Intern/intern_rotate_001"
+          }
+        ],
+        "onInvalidDrop": [
+          {
+            "id": "intern_fail_001",
+            "text": "That was my lower back.",
+            "audioAddress": "Audio/Intern/intern_fail_001"
+          }
+        ],
+        "onValidDrop": [
+          {
+            "id": "intern_success_001",
+            "text": "Wake me when we get there.",
+            "audioAddress": "Audio/Intern/intern_success_001"
+          }
+        ],
+        "onSquished": [
+          {
+            "id": "intern_squish_001",
+            "text": "Mmf. Walls.",
+            "audioAddress": "Audio/Intern/intern_squish_001"
+          }
+        ]
+      },
+      "effects": {
+        "spawnSleepBubbleWhenHorizontal": true,
+        "paperBurstCount": 0
+      }
+    },
+    {
+      "id": "broken_copy_machine",
+      "displayName": "The Broken Copy Machine",
+      "category": "equipment",
+      "prefabAddress": "OfficeItems/BrokenCopyMachine",
+      "shape": [
+        [1, 1],
+        [1, 1]
+      ],
+      "allowedRotations": [0, 90, 180, 270],
+      "weightClass": "heavy",
+      "tags": ["equipment", "heavy_equipment", "electrical"],
+      "animationTriggers": {
+        "grab": "Grabbed",
+        "rotate": "Rotated",
+        "validDrop": "Placed",
+        "invalidDrop": "Rejected"
+      },
+      "voiceLines": {
+        "onGrab": [],
+        "onRotate": [],
+        "onDragHeld": [
+          {
+            "id": "printer_drag_001",
+            "text": "",
+            "audioAddress": "Audio/Printer/printer_grind_001"
+          }
+        ],
+        "onInvalidDrop": [
+          {
+            "id": "printer_fail_001",
+            "text": "",
+            "audioAddress": "Audio/Printer/printer_crunch_001"
+          }
+        ],
+        "onValidDrop": [
+          {
+            "id": "printer_success_001",
+            "text": "",
+            "audioAddress": "Audio/Printer/printer_relief_001"
+          }
+        ]
+      },
+      "effects": {
+        "spawnSleepBubbleWhenHorizontal": false,
+        "paperBurstCount": 16
+      }
+    },
+    {
+      "id": "micromanaging_ceo",
+      "displayName": "The Micro-Managing CEO",
+      "category": "executive",
+      "prefabAddress": "OfficeItems/MicromanagingCEO",
+      "shape": [
+        [1, 1, 1],
+        [0, 1, 0]
+      ],
+      "allowedRotations": [0, 90, 180, 270],
+      "weightClass": "medium",
+      "tags": ["human", "employee", "management", "ceo"],
+      "animationTriggers": {
+        "grab": "Grabbed",
+        "rotate": "Rotated",
+        "validDrop": "Placed",
+        "invalidDrop": "Rejected"
+      },
+      "voiceLines": {
+        "onGrab": [
+          {
+            "id": "ceo_grab_001",
+            "text": "Let's synergize this.",
+            "audioAddress": "Audio/CEO/ceo_grab_001"
+          },
+          {
+            "id": "ceo_grab_002",
+            "text": "We should circle back.",
+            "audioAddress": "Audio/CEO/ceo_grab_002"
+          }
+        ],
+        "onDragHeld": [
+          {
+            "id": "ceo_hold_001",
+            "text": "I want to align on deliverables.",
+            "audioAddress": "Audio/CEO/ceo_hold_001"
+          },
+          {
+            "id": "ceo_hold_002",
+            "text": "Let's take this offline.",
+            "audioAddress": "Audio/CEO/ceo_hold_002"
+          }
+        ],
+        "onRotate": [
+          {
+            "id": "ceo_rotate_001",
+            "text": "This was not in the quarterly plan.",
+            "audioAddress": "Audio/CEO/ceo_rotate_001"
+          }
+        ],
+        "onInvalidRotation": [
+          {
+            "id": "ceo_badrotate_001",
+            "text": "Absolutely not.",
+            "audioAddress": "Audio/CEO/ceo_badrotate_001"
+          }
+        ],
+        "onInvalidDrop": [
+          {
+            "id": "ceo_fail_001",
+            "text": "Who approved this placement?",
+            "audioAddress": "Audio/CEO/ceo_fail_001"
+          }
+        ],
+        "onValidDrop": [
+          {
+            "id": "ceo_success_001",
+            "text": "Excellent execution by leadership.",
+            "audioAddress": "Audio/CEO/ceo_success_001"
+          }
+        ],
+        "onLevelComplete": [
+          {
+            "id": "ceo_complete_001",
+            "text": "I'd like to take credit for this.",
+            "audioAddress": "Audio/CEO/ceo_complete_001"
+          }
+        ]
+      },
+      "effects": {
+        "spawnSleepBubbleWhenHorizontal": false,
+        "paperBurstCount": 0
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "level_001",
+      "displayName": "Mandatory Elevator Meeting",
+      "gridWidth": 4,
+      "gridHeight": 3,
+      "requiredCharacterIds": [
+        "sleeping_intern",
+        "broken_copy_machine",
+        "micromanaging_ceo"
+      ],
+      "moveLimit": 0,
+      "completionLine": "Everyone has been successfully restructured.",
+      "cellSize": 1.0,
+      "hrEnabled": true,
+      "hrWarningThreshold": 25,
+      "hrFailureLimit": 60
+    },
+    {
+      "id": "level_001_control_panel",
+      "displayName": "Mandatory Elevator Meeting (Control Panel)",
+      "gridWidth": 4,
+      "gridHeight": 3,
+      "requiredCharacterIds": [
+        "sleeping_intern",
+        "broken_copy_machine",
+        "micromanaging_ceo"
+      ],
+      "moveLimit": 0,
+      "completionLine": "Everyone has been successfully restructured.",
+      "cellSize": 1.0,
+      "blockedCells": [
+        { "x": 2, "y": 0 }
+      ],
+      "hrEnabled": true,
+      "hrWarningThreshold": 25,
+      "hrFailureLimit": 60
+    }
+  ],
+  "hrRules": [
+    {
+      "id": "employee_upside_down",
+      "category": "Orientation",
+      "trigger": "OnArrangementChanged",
+      "score": 15,
+      "persistent": true,
+      "message": "Employees must remain reasonably upright.",
+      "condition": {
+        "kind": "RotatedUpsideDown",
+        "subjectTags": ["human", "employee"],
+        "respectCanBeUpsideDown": true
+      }
+    },
+    {
+      "id": "intern_touching_ceo",
+      "category": "CharacterRelationship",
+      "trigger": "OnArrangementChanged",
+      "score": 10,
+      "persistent": true,
+      "message": "The intern has not completed executive-contact training.",
+      "condition": {
+        "kind": "AdjacentTag",
+        "subjectTags": ["intern"],
+        "neighbourTag": "management"
+      }
+    },
+    {
+      "id": "employee_under_heavy_equipment",
+      "category": "EquipmentSafety",
+      "trigger": "OnArrangementChanged",
+      "score": 25,
+      "persistent": true,
+      "message": "Heavy office equipment may not be stored above personnel.",
+      "condition": {
+        "kind": "TagDirectlyAbove",
+        "subjectTags": ["human", "employee"],
+        "neighbourTag": "heavy_equipment"
+      }
+    }
+  ]
+}
