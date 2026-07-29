@@ -23,7 +23,93 @@
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
     font:500 16px/1.35 ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
     overscroll-behavior:none;touch-action:none;user-select:none}
-  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  /* The office atrium: fills every pixel around the elevator column so wide screens read
+     as a place, not a void. Window-light columns, floor glow, dust in the light shafts. */
+  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(60% 42% at 50% 108%, rgba(242,201,76,.10), transparent 60%),
+      linear-gradient(180deg, #05070b 0%, #0a1018 42%, #0d1521 78%, #131c2a 100%)}
+  #app::before,#app::after{content:"";position:absolute;top:0;bottom:0;width:34%;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 34px, rgba(140,200,255,.055) 34px 60px, transparent 60px 74px),
+      repeating-linear-gradient(0deg, transparent 0 46px, rgba(140,200,255,.045) 46px 78px, transparent 78px 92px);
+    -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 18%, #000 78%, transparent 100%);
+    mask-image:linear-gradient(180deg, transparent 0%, #000 18%, #000 78%, transparent 100%);
+    pointer-events:none}
+  #app::before{left:0;
+    -webkit-mask-image:linear-gradient(105deg, #000 0%, #000 55%, transparent 96%);
+    mask-image:linear-gradient(105deg, #000 0%, #000 55%, transparent 96%)}
+  #app::after{right:0;transform:scaleX(-1);
+    -webkit-mask-image:linear-gradient(105deg, #000 0%, #000 55%, transparent 96%);
+    mask-image:linear-gradient(105deg, #000 0%, #000 55%, transparent 96%)}
+  .dust{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(200,225,255,.16);
+    animation:dustFloat linear infinite;pointer-events:none}
+  @keyframes dustFloat{0%{transform:translateY(8vh) translateX(0);opacity:0}
+    12%{opacity:.7}88%{opacity:.5}100%{transform:translateY(-104vh) translateX(6vw);opacity:0}}
+  .paperfly{position:absolute;width:16px;height:20px;border-radius:2px;background:rgba(233,240,247,.14);
+    box-shadow:inset 0 3px 0 rgba(0,0,0,.15);animation:paperDrift ease-in-out infinite;pointer-events:none}
+  @keyframes paperDrift{0%{transform:translateY(-6vh) rotate(0)}50%{transform:translateY(50vh) rotate(200deg) translateX(-4vw)}
+    100%{transform:translateY(106vh) rotate(380deg)}}
+
+  /* Living-poster wings: neighbouring elevator cars with coworkers already suffering
+     inside. Wide screens only. Scenery — nothing here can touch the game. */
+  .wing{position:absolute;top:50%;width:172px;height:250px;display:none;pointer-events:none;
+    animation:carBob 5.5s ease-in-out infinite}
+  @media (min-width:1040px){.wing{display:block}}
+  .wing.wl{left:calc(50% - min(50vw,28.125vh) - 216px)}
+  .wing.wr{right:calc(50% - min(50vw,28.125vh) - 216px);animation-delay:-2.7s}
+  @keyframes carBob{0%,100%{transform:translateY(-52%)}50%{transform:translateY(-48%)}}
+  .wingcar{position:absolute;inset:0;border-radius:12px;overflow:hidden;
+    background:linear-gradient(180deg,#1a2635,#111a26);
+    box-shadow:inset 0 0 0 2px rgba(160,200,240,.18), inset 0 12px 26px rgba(120,180,255,.07),
+      0 20px 44px rgba(0,0,0,.55)}
+  .wingcar::before{content:"";position:absolute;left:8%;right:8%;top:3px;height:5px;border-radius:3px;
+    background:linear-gradient(90deg,transparent,rgba(255,244,214,.45),transparent)}
+  .wingcar::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(112deg,transparent 30%,rgba(140,200,255,.10) 45%,transparent 60%)}
+  .wing .cable{position:absolute;left:46%;bottom:100%;width:3px;height:38px;background:rgba(180,200,220,.35)}
+  .wing .cable+.cable{left:56%}
+  .wchar{position:absolute;border-radius:9px}
+  .wface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .weye{width:9px;height:9px;background:#10161d;border-radius:50%;display:inline-block}
+  .weyes{display:flex;gap:12px}
+  .wmouth{margin-top:7px;width:20px;height:5px;background:#10161d;border-radius:0 0 40% 40%}
+  /* CEO crushed against the glass: pressed flat, furious */
+  .wceo{left:6%;right:6%;top:8%;height:44%;
+    background:linear-gradient(160deg,#ffe9a8,#ffd166 45%,#c99b2e);
+    transform:scale(.92,1.06);animation:wsquirm 1.9s ease-in-out infinite}
+  @keyframes wsquirm{0%,100%{transform:scale(.92,1.06) translateX(0)}
+    30%{transform:scale(.88,1.1) translateX(-2px)}60%{transform:scale(.94,1.03) translateX(2px)}}
+  .wceo .wmouth{border-radius:40% 40% 0 0}
+  .wceo .wbrow{position:absolute;width:13px;height:3px;background:#10161d;top:34%}
+  .wceo .wbrow.l{left:26%;transform:rotate(18deg)}
+  .wceo .wbrow.r{right:26%;transform:rotate(-18deg)}
+  .wceo .wcrown{position:absolute;top:-9px;left:32%;width:36%;height:12px;
+    background:linear-gradient(#ffe27a,#e8b53a);
+    clip-path:polygon(0 100%,0 25%,20% 60%,40% 8%,60% 60%,80% 8%,100% 25%,100% 100%)}
+  .wsmear{position:absolute;left:4%;right:4%;top:6%;height:48%;border-radius:9px;
+    background:radial-gradient(60% 45% at 50% 55%,rgba(220,240,255,.10),transparent 70%)}
+  /* Intern asleep against the glass + copier mid paper jam */
+  .wintern{left:6%;right:48%;bottom:6%;height:40%;
+    background:linear-gradient(160deg,#c3e7ff,#7fd1ff 45%,#4d95c9);
+    animation:wbreathe 3.4s ease-in-out infinite;transform-origin:bottom}
+  @keyframes wbreathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.97)}}
+  .wintern .weye{height:3px;border-radius:2px}
+  .wzz{position:absolute;top:-16px;right:2px;font:700 14px/1 inherit;color:#bcd;
+    animation:zfloat 2.6s ease-in-out infinite}
+  .wcopier{left:56%;right:6%;bottom:6%;height:40%;
+    background:linear-gradient(160deg,#dbe3ec,#b9c4d0 45%,#8d99a8);
+    animation:wrattle .55s linear infinite}
+  @keyframes wrattle{0%,100%{transform:translate(0)}25%{transform:translate(-1px,1px)}75%{transform:translate(1px,-1px)}}
+  .wcopier .wled{position:absolute;right:6px;top:6px;width:7px;height:7px;border-radius:50%;
+    background:#2aff6a;animation:ledBlink 1.1s infinite}
+  .wcopier .wslot{position:absolute;left:14%;right:14%;top:52%;height:5px;background:#1a232e;border-radius:2px}
+  .wpaper{position:absolute;width:11px;height:14px;background:#e9f0f7;border-radius:2px;
+    left:60%;top:40%;opacity:0;animation:wjam 2.6s ease-out infinite}
+  .wpaper:nth-child(2){animation-delay:.4s}.wpaper:nth-child(3){animation-delay:.9s}
+  @keyframes wjam{0%{transform:translate(0,0) rotate(0);opacity:0}8%{opacity:1}
+    100%{transform:translate(-70px,-110px) rotate(300deg);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.wing,.dust,.paperfly{animation:none!important;display:none}}
   #game{position:relative;width:100%;height:100%;max-width:min(100vw,56.25vh);
     aspect-ratio:9/16;display:flex;flex-direction:column;overflow:hidden;
     background:
@@ -37,16 +123,36 @@
   .stats b{color:var(--ink);font-weight:700}
 
   #stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:4px 14px}
-  #shaft{position:relative;background:linear-gradient(180deg,#15202c,#101823);border-radius:14px;
-    box-shadow:inset 0 0 0 2px var(--line), inset 0 22px 44px rgba(0,0,0,.55), 0 18px 40px rgba(0,0,0,.45)}
+  /* Elevator cables above the car */
+  #stage::before{content:"";position:absolute;top:0;left:50%;width:120px;height:44px;transform:translateX(-50%);
+    background:
+      linear-gradient(90deg, transparent 46px, rgba(180,200,220,.35) 46px, rgba(180,200,220,.35) 49px, transparent 49px),
+      linear-gradient(90deg, transparent 70px, rgba(180,200,220,.35) 70px, rgba(180,200,220,.35) 73px, transparent 73px);
+    pointer-events:none}
+  /* The car: brushed steel back wall, ceiling light strip, handrail, glass front */
+  #shaft{position:relative;border-radius:14px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.055) 0, rgba(255,255,255,.055) 7px, transparent 7px),
+      linear-gradient(180deg, transparent calc(100% - 9px), rgba(242,201,76,.10) calc(100% - 9px)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 3px, transparent 3px 7px),
+      linear-gradient(180deg,#1a2635,#121b28 55%,#0f1722);
+    box-shadow:inset 0 0 0 2px rgba(160,200,240,.15), inset 0 14px 30px rgba(120,180,255,.06),
+      inset 0 -18px 34px rgba(0,0,0,.5), 0 24px 50px rgba(0,0,0,.55), 0 0 60px rgba(120,180,255,.05)}
+  #shaft::before{content:"";position:absolute;left:6%;right:6%;top:2px;height:6px;border-radius:4px;
+    background:linear-gradient(90deg,transparent,rgba(255,244,214,.5),transparent);
+    filter:blur(1px);pointer-events:none}
   #shaft::after{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
-    background:linear-gradient(105deg,transparent 34%,var(--glass) 44%,transparent 55%);
-    background-size:220% 100%;animation:sheen 9s ease-in-out infinite}
+    background:
+      linear-gradient(105deg,transparent 34%,var(--glass) 44%,transparent 55%),
+      linear-gradient(255deg,transparent 60%,rgba(140,200,255,.045) 70%,transparent 82%);
+    background-size:220% 100%,100% 100%;animation:sheen 9s ease-in-out infinite}
   @keyframes sheen{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
   #shaft.shake{animation:shake .26s linear}
   @keyframes shake{0%,100%{transform:translate(0)}20%{transform:translate(-5px,1px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,2px)}80%{transform:translate(3px,-1px)}}
-  .cell{position:absolute;border-radius:6px;background:rgba(255,255,255,.028);
-    box-shadow:inset 0 0 0 1px var(--line), inset 0 -8px 14px rgba(0,0,0,.12)}
+  .cell{position:absolute;border-radius:6px;
+    background:linear-gradient(180deg,rgba(150,195,240,.05),rgba(255,255,255,.02) 55%,rgba(0,0,0,.06));
+    box-shadow:inset 0 0 0 1px rgba(160,200,240,.10), inset 0 -8px 14px rgba(0,0,0,.14),
+      inset 0 1px 0 rgba(255,255,255,.05)}
   .ghost{position:absolute;border-radius:6px;pointer-events:none;opacity:.85;transition:background .08s}
   .ghost.ok{background:rgba(61,220,132,.30);box-shadow:inset 0 0 0 2px var(--ok),0 0 18px rgba(61,220,132,.25)}
   .ghost.bad{background:rgba(255,77,94,.28);box-shadow:inset 0 0 0 2px var(--bad),0 0 18px rgba(255,77,94,.25)}
@@ -131,7 +237,7 @@
   .acc-drool{left:58%;top:62%;width:7%;height:18%;background:#bfe6ff;border-radius:0 0 50% 50%}
 
   /* Tray */
-  #tray{min-height:24%;padding:10px 12px 64px;display:flex;align-items:center;
+  #tray{min-height:27%;padding:10px 12px 62px;display:flex;align-items:center;
     justify-content:center;gap:12px;flex-wrap:wrap;position:relative}
   #tray::before{content:"";position:absolute;left:14px;right:14px;top:0;height:1px;background:var(--line)}
   .pop{animation:popIn .38s cubic-bezier(.2,.9,.3,1.35) both}
@@ -210,7 +316,31 @@
 </style>
 </head>
 <body>
-<div id="app"><div id="game">
+<div id="app">
+<div class="wing wl"><div class="cable"></div><div class="cable"></div><div class="wingcar">
+  <div class="wsmear"></div>
+  <div class="wchar wceo"><div class="wcrown"></div><div class="wface">
+    <div class="wbrow l"></div><div class="wbrow r"></div>
+    <div class="weyes"><span class="weye"></span><span class="weye"></span></div><div class="wmouth"></div>
+  </div></div>
+  <div class="wchar wintern"><div class="wzz">z</div><div class="wface">
+    <div class="weyes"><span class="weye"></span><span class="weye"></span></div><div class="wmouth"></div>
+  </div></div>
+  <div class="wchar wcopier"><div class="wled"></div><div class="wslot"></div></div>
+  <div class="wpaper"></div><div class="wpaper"></div><div class="wpaper"></div>
+</div></div>
+<div class="wing wr"><div class="cable"></div><div class="cable"></div><div class="wingcar">
+  <div class="wsmear"></div>
+  <div class="wchar wceo" style="background:linear-gradient(160deg,#ffc2d4,#ff8fb1 45%,#c9608a)"><div class="wface">
+    <div class="weyes"><span class="weye"></span><span class="weye"></span></div><div class="wmouth"></div>
+  </div></div>
+  <div class="wchar wintern" style="background:linear-gradient(160deg,#e2ffc9,#c1f26b 45%,#8cb944)"><div class="wface">
+    <div class="weyes"><span class="weye"></span><span class="weye"></span></div><div class="wmouth"></div>
+  </div></div>
+  <div class="wchar wcopier" style="background:linear-gradient(160deg,#d8bfa0,#b07a4f 45%,#7d5535)"><div class="wled"></div><div class="wslot"></div></div>
+  <div class="wpaper"></div><div class="wpaper"></div><div class="wpaper"></div>
+</div></div>
+<div id="game">
   <header>
     <div class="brand">FIRE YOUR <span>COWORKERS</span></div>
     <div class="stats">
@@ -602,9 +732,10 @@ function trayUnitFor(cells){
   const box=tray.getBoundingClientRect();
   const n=Math.max(1, pieces.filter(q=>!q.placed).length);
   const rows=n>4?2:1, perRow=Math.ceil(n/rows);
-  const availH=Math.max(26, ((box.height||160)-76)/rows - (rows>1?8:0));
+  const availH=Math.max(26, ((box.height||170)-62)/rows - (rows>1?8:0));
   const availW=Math.max(26, ((box.width||300)-24)/perRow - 12);
-  return Math.max(12, Math.floor(Math.min(availW/w, availH/h, cellPx)));
+  // Characters ARE the product: let them fill the rack, capped just under grid scale.
+  return Math.max(13, Math.floor(Math.min(availW/w, availH/h, cellPx*0.96)));
 }
 
 /* ---------------- Piece construction --------------------------------------------------------- */
@@ -1069,6 +1200,28 @@ function openShop(highlight){ renderShop(highlight); shopEl.classList.add("show"
 function closeShop(){ shopEl.classList.remove("show"); }
 document.getElementById("btnShop").onclick=()=>{ ac(); openShop(); };
 document.getElementById("shopClose").onclick=()=>closeShop();
+
+/* Ambient atrium life: floating dust in the light shafts and the occasional stray page.
+   Pure scenery — lives outside #game, touches nothing. */
+(function(){
+  try{
+    const app=document.getElementById("app");
+    for(let i=0;i<10;i++){
+      const d=document.createElement("div"); d.className="dust";
+      d.style.left=(3+Math.random()*94)+"vw";
+      d.style.animationDuration=(14+Math.random()*16)+"s";
+      d.style.animationDelay=(-Math.random()*20)+"s";
+      app.appendChild(d);
+    }
+    for(let i=0;i<3;i++){
+      const p=document.createElement("div"); p.className="paperfly";
+      p.style.left=(6+Math.random()*20+(i>1?62:0))+"vw";
+      p.style.animationDuration=(17+Math.random()*9)+"s";
+      p.style.animationDelay=(-Math.random()*18)+"s";
+      app.appendChild(p);
+    }
+  }catch(e){}
+})();
 
 /* ---------------- Level lifecycle ------------------------------------------------------------ */
 function load(i){

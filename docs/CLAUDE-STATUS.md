@@ -98,3 +98,18 @@ Puppeteer visitor probe (web/liveproof.mjs): NOT LIVE — ERR_NAME_NOT_RESOLVED 
 Local git repo READY: main @ 537695a, 52 files. Remaining (operator accounts):
 GitHub push -> DO App from repo (deploy/do-app.yaml) -> attach domain (creates zone + SSL)
 -> I rerun liveproof + FYC_URL e2e --all; live claimed only on 199/199 against production.
+
+---
+
+## LIVE — 2026-07-29 ~13:45 UTC
+
+https://fireyourcoworkers.com and https://www.fireyourcoworkers.com serve the game over
+valid SSL. Puppeteer liveproof: HTTP 200, title correct, game seam present, screenshots
+captured. Production harness: FYC_URL e2e --all = 199 passed, 0 failed.
+
+Hosting: DO App Platform FREE static site (app 8678783b-ec62-49d2-9758-b29d074c34e8,
+ingress fireyourcoworkers-ig8s6.ondigitalocean.app) from public GitHub repo
+emailonly613-web/fireyourcoworkers via plain-git source. DNS zone auto-created.
+Redeploy after any push: doctl apps create-deployment 8678783b-ec62-49d2-9758-b29d074c34e8
+
+Next: v2 milestone 3 — analytics on the four gating metrics.
