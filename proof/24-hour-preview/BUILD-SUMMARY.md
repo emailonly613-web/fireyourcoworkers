@@ -95,8 +95,8 @@ Date: 2026-07-29
 - Prohibited public marks and fake engagement counts: PASS, absent from the application surface.
 - Public preview deployment: PASS at
   `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/`; app and deployment are ACTIVE.
-- Deployment identity: PASS; deployed source hash matches local `HEAD`
-  `8d62473f2773cc70981bfe866e81f3d6938d21d3`.
+- Deployment identity: PASS; `8d62473f2773cc70981bfe866e81f3d6938d21d3` is the
+  last commit that changed `public-preview/`. Later branch commits add proof files only.
 - PWA runtime: PASS; Chromium is controlled by `/sw.js` with cache
   `fire-your-coworkers-shell-v1`.
 - Offline starter level: PASS; offline reload returned HTTP 200 from the service worker and
