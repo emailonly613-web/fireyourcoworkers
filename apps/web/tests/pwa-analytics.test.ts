@@ -223,12 +223,14 @@ describe("anonymous analytics adapter", () => {
       move_count: -4,
       elapsed_ms: Number.POSITIVE_INFINITY,
       score: 2_000_000_000,
+      shift_id: " AFTER-HOURS-ENGINEERING ",
     });
 
     expect(record?.properties).toEqual({
       level_id: "floor_030",
       move_count: 0,
       score: 1_000_000_000,
+      shift_id: "after-hours-engineering",
     });
   });
 

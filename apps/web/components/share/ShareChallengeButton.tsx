@@ -8,6 +8,7 @@ import {
   type ShareResult,
 } from "@/lib/share";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import type { ShiftId } from "@/game/cast";
 
 type ShareSurface = "hero" | "game" | "completion" | "lawsuit";
 
@@ -19,6 +20,7 @@ export function ShareChallengeButton({
   result = "completed",
   score = 0,
   showCopyFallback = false,
+  shiftId,
   surface,
 }: {
   className?: string;
@@ -28,6 +30,7 @@ export function ShareChallengeButton({
   result?: ShareResult;
   score?: number;
   showCopyFallback?: boolean;
+  shiftId?: ShiftId;
   surface: ShareSurface;
 }) {
   const [busy, setBusy] = useState(false);
@@ -51,7 +54,7 @@ export function ShareChallengeButton({
     setManualUrl(null);
 
     const payload = mode === "challenge"
-      ? buildSharePayload({ moves, origin: window.location.origin, result, score })
+      ? buildSharePayload({ moves, origin: window.location.origin, result, score, shiftId })
       : buildSiteSharePayload(window.location.origin);
     const delivery = await deliverShare(payload, {
       nativeShare:
@@ -68,6 +71,7 @@ export function ShareChallengeButton({
       level_id: "mandatory-elevator-meeting",
       method: delivery.method,
       outcome: delivery.outcome,
+      shift_id: shiftId,
       surface,
     });
 

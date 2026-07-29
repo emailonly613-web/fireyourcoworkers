@@ -43,8 +43,9 @@ export interface AnalyticsEventPayloadMap {
     move_count: number;
     elapsed_ms: number;
     score?: number;
+    shift_id?: string;
   };
-  lawsuit_triggered: { level_id: string; rule_id: string; strike_count: number };
+  lawsuit_triggered: { level_id: string; rule_id: string; shift_id?: string; strike_count: number };
   replay_viewed: { level_id: string; source: ReplaySource };
   install_cta_selected: { surface: InstallSurface; result: InstallResult };
   share_selected: {
@@ -52,6 +53,7 @@ export interface AnalyticsEventPayloadMap {
     surface: ShareSurface;
     method: ShareMethod;
     outcome: ShareOutcome;
+    shift_id?: string;
   };
   challenge_opened: { level_id: string; target_result: ChallengeResult };
   challenge_completed: {
@@ -148,10 +150,12 @@ const EVENT_FIELDS: Record<AnalyticsEventName, Record<string, FieldRule>> = {
     move_count: MOVE_NUMBER,
     elapsed_ms: { type: "number", max: 86_400_000 },
     score: { type: "number", max: 1_000_000_000 },
+    shift_id: IDENTIFIER,
   },
   lawsuit_triggered: {
     level_id: IDENTIFIER,
     rule_id: IDENTIFIER,
+    shift_id: IDENTIFIER,
     strike_count: MOVE_NUMBER,
   },
   replay_viewed: {
@@ -167,6 +171,7 @@ const EVENT_FIELDS: Record<AnalyticsEventName, Record<string, FieldRule>> = {
     surface: { type: "enum", values: SHARE_SURFACES },
     method: { type: "enum", values: SHARE_METHODS },
     outcome: { type: "enum", values: SHARE_OUTCOMES },
+    shift_id: IDENTIFIER,
   },
   challenge_opened: {
     level_id: IDENTIFIER,

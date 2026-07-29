@@ -13,7 +13,13 @@ import {
   MicroManagingCeo,
   SleepingIntern,
 } from "@/components/characters/CharacterArt";
+import {
+  BurnedOutEngineer,
+  CoffeeMachine,
+  ReplyAllDirector,
+} from "@/components/characters/ShiftCharacterArt";
 import { GameTutorial } from "@/components/game/GameTutorial";
+import { PerformanceReviewActions } from "@/components/share/PerformanceReviewActions";
 import { ShareChallengeButton } from "@/components/share/ShareChallengeButton";
 import {
   HR_RULE_DEFINITIONS,
@@ -37,6 +43,16 @@ import {
   type PlacementPreview,
   type Rotation,
 } from "@/game";
+import {
+  DEFAULT_SHIFT_ID,
+  SHIFTS,
+  getCastMember,
+  getNextShiftId,
+  getShift,
+  reactionFor,
+  type ShiftId,
+} from "@/game/cast";
+import { deriveRunVerdict } from "@/game/results";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { compareChallengeResult, parseChallengeTarget } from "@/lib/share";
 import { markTutorialSeen, shouldShowTutorial } from "@/lib/tutorial";
@@ -58,29 +74,25 @@ type PieceReaction = {
   tone: "success" | "failure";
 };
 
+type IncidentBeat = {
+  serial: number;
+  label: string;
+  line: string;
+  tone: "clean" | "warning" | "finale";
+};
+
+type PersonalBest = {
+  score: number;
+  moves: number;
+};
+
 const INITIAL_ROTATIONS: RotationMap = {
   "sleeping-intern": 0,
   "micro-managing-ceo": 0,
   "broken-copy-machine": 0,
 };
 
-const PIECE_NOTES: Record<PieceId, string> = {
-  "sleeping-intern": "Long, sleepy, surprisingly load-bearing.",
-  "micro-managing-ceo": "Wide stance. Wider liability radius.",
-  "broken-copy-machine": "Rigid equipment. Zero spatial awareness.",
-};
-
-const SUCCESS_REACTIONS: Record<PieceId, string> = {
-  "sleeping-intern": "…wake me when we get there.",
-  "micro-managing-ceo": "Exactly where I delegated myself.",
-  "broken-copy-machine": "PLACEMENT ACCEPTED. PAPERWORK PENDING.",
-};
-
-const FAILURE_REACTIONS: Record<PieceId, string> = {
-  "sleeping-intern": "Is my internship over?",
-  "micro-managing-ceo": "This is not an aligned fit.",
-  "broken-copy-machine": "ERROR: PERSONAL SPACE UNAVAILABLE.",
-};
+const BEST_STORAGE_PREFIX = "fyc-floor-one-best";
 
 function cellKey({ x, y }: Cell) {
   return `${x},${y}`;
@@ -94,14 +106,46 @@ function pieceBounds(cells: readonly Cell[]) {
   return { minX, minY, width: maxX - minX + 1, height: maxY - minY + 1 };
 }
 
-function PieceArt({ pieceId }: { pieceId: PieceId }) {
-  switch (pieceId) {
+function PieceArt({ pieceId, shiftId }: { pieceId: PieceId; shiftId: ShiftId }) {
+  switch (getCastMember(shiftId, pieceId).id) {
     case "sleeping-intern":
       return <SleepingIntern className="playable-piece__art playable-piece__art--intern" />;
     case "micro-managing-ceo":
       return <MicroManagingCeo className="playable-piece__art playable-piece__art--ceo" />;
     case "broken-copy-machine":
       return <BrokenCopyMachine className="playable-piece__art playable-piece__art--printer" />;
+    case "burned-out-engineer":
+      return <BurnedOutEngineer className="playable-piece__art playable-piece__art--intern" />;
+    case "reply-all-director":
+      return <ReplyAllDirector className="playable-piece__art playable-piece__art--ceo" />;
+    case "coffee-machine":
+      return <CoffeeMachine className="playable-piece__art playable-piece__art--printer" />;
+  }
+}
+
+function isBetterResult(candidate: PersonalBest, current: PersonalBest | null) {
+  return !current || candidate.score < current.score ||
+    (candidate.score === current.score && candidate.moves < current.moves);
+}
+
+function readPersonalBest(shiftId: ShiftId): PersonalBest | null {
+  try {
+    const value = window.localStorage.getItem(`${BEST_STORAGE_PREFIX}:${shiftId}`);
+    if (!value) return null;
+    const parsed = JSON.parse(value) as Partial<PersonalBest>;
+    if (!Number.isInteger(parsed.score) || !Number.isInteger(parsed.moves)) return null;
+    if ((parsed.score ?? -1) < 0 || (parsed.score ?? 101) > 99 || (parsed.moves ?? -1) < 3) return null;
+    return { score: parsed.score as number, moves: parsed.moves as number };
+  } catch {
+    return null;
+  }
+}
+
+function writePersonalBest(shiftId: ShiftId, best: PersonalBest) {
+  try {
+    window.localStorage.setItem(`${BEST_STORAGE_PREFIX}:${shiftId}`, JSON.stringify(best));
+  } catch {
+    // The run still works when storage is unavailable or blocked.
   }
 }
 
@@ -147,6 +191,7 @@ function PlacedPiece({
   flagged,
   locked,
   reaction,
+  shiftId,
   onPointerDown,
 }: {
   placement: PiecePlacement;
@@ -156,12 +201,13 @@ function PlacedPiece({
   flagged: boolean;
   locked: boolean;
   reaction: PieceReaction | null;
+  shiftId: ShiftId;
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>, pieceId: PieceId) => void;
 }) {
-  const definition = getPieceDefinition(placement.pieceId);
+  const member = getCastMember(shiftId, placement.pieceId);
   return (
     <button
-      aria-label={`Move ${definition.publicName}`}
+      aria-label={`Move ${member.publicName}`}
       className={`playable-piece playable-piece--${placement.pieceId}${pressured ? " playable-piece--pressured" : ""}${flagged ? " playable-piece--hr-flagged" : ""}`}
       data-testid={`placed-${placement.pieceId}`}
       disabled={locked}
@@ -174,7 +220,7 @@ function PlacedPiece({
         className="playable-piece__art-wrap"
         style={{ "--piece-rotation": `${placement.rotation}deg` } as CSSProperties}
       >
-        <PieceArt pieceId={placement.pieceId} />
+        <PieceArt pieceId={placement.pieceId} shiftId={shiftId} />
       </span>
       {reaction?.pieceId === placement.pieceId ? (
         <span className={`playable-piece__reaction playable-piece__reaction--${reaction.tone}`}>
@@ -187,6 +233,7 @@ function PlacedPiece({
 
 export function PlayableElevator() {
   const [game, setGame] = useState<GameState>(() => createInitialState());
+  const [shiftId, setShiftId] = useState<ShiftId>(DEFAULT_SHIFT_ID);
   const [rotations, setRotations] = useState<RotationMap>(INITIAL_ROTATIONS);
   const [selectedPiece, setSelectedPiece] = useState<PieceId>("micro-managing-ceo");
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -196,6 +243,11 @@ export function PlayableElevator() {
   const [message, setMessage] = useState("Select a coworker, then drag or choose a target cell.");
   const [invalidPulse, setInvalidPulse] = useState(0);
   const [reaction, setReaction] = useState<PieceReaction | null>(null);
+  const [incident, setIncident] = useState<IncidentBeat | null>(null);
+  const [cleanStreak, setCleanStreak] = useState(0);
+  const [resultReveal, setResultReveal] = useState(false);
+  const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
+  const [isNewPersonalBest, setIsNewPersonalBest] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [challengeTarget, setChallengeTarget] = useState<ReturnType<typeof parseChallengeTarget>>(null);
@@ -204,6 +256,7 @@ export function PlayableElevator() {
     createHrPersistentState(),
   );
   const boardRef = useRef<HTMLDivElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const tutorialTriggerRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -212,6 +265,8 @@ export function PlayableElevator() {
   const invalidAttemptCounterRef = useRef(0);
   const lawsuitEpisodeTrackedRef = useRef(false);
   const startedAtRef = useRef(Date.now());
+  const incidentSerialRef = useRef(0);
+  const resultRevealTimerRef = useRef<number | null>(null);
 
   const targetCells = useMemo(
     () => new Set(game.level.targetCells.map(cellKey)),
@@ -232,6 +287,21 @@ export function PlayableElevator() {
   const challengeVerdict = solved && challengeTarget
     ? compareChallengeResult(challengeTarget, { moves: attemptMoves, score: hr.score })
     : null;
+  const shift = useMemo(() => getShift(shiftId), [shiftId]);
+  const topViolation = useMemo(
+    () => [...hr.activeViolations].sort((a, b) => b.score - a.score)[0],
+    [hr.activeViolations],
+  );
+  const runVerdict = useMemo(
+    () => deriveRunVerdict({
+      equipmentLabel: shiftId === "after-hours-engineering" ? "coffee machine" : "copier",
+      lawsuit: hr.lawsuit,
+      moves: attemptMoves,
+      score: hr.score,
+      topViolationId: topViolation?.id,
+    }),
+    [attemptMoves, hr.lawsuit, hr.score, shiftId, topViolation?.id],
+  );
   const activeRulesById = useMemo(
     () => new Map(hr.activeViolations.map((violation) => [violation.id, violation])),
     [hr.activeViolations],
@@ -249,6 +319,7 @@ export function PlayableElevator() {
     const incomingChallenge = parseChallengeTarget(window.location.search);
     setChallengeTarget(incomingChallenge);
     setChallengeInvalid(params.has("c") && !incomingChallenge);
+    if (incomingChallenge?.shiftId) setShiftId(incomingChallenge.shiftId);
     if (incomingChallenge) {
       trackAnalyticsEvent("challenge_opened", {
         level_id: incomingChallenge.levelId,
@@ -285,6 +356,30 @@ export function PlayableElevator() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    setPersonalBest(readPersonalBest(shiftId));
+    setIsNewPersonalBest(false);
+  }, [shiftId]);
+
+  useEffect(() => () => {
+    if (resultRevealTimerRef.current !== null) {
+      window.clearTimeout(resultRevealTimerRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!resultReveal) return;
+    const frame = window.requestAnimationFrame(() => {
+      resultRef.current?.focus({ preventScroll: true });
+      resultRef.current?.scrollIntoView({
+        behavior: "instant" as ScrollBehavior,
+        block: "start",
+        inline: "nearest",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [resultReveal]);
+
   const dismissTutorial = () => {
     markTutorialSeen();
     setTutorialOpen(false);
@@ -306,6 +401,7 @@ export function PlayableElevator() {
     trackAnalyticsEvent("lawsuit_triggered", {
       level_id: game.level.id,
       rule_id: topViolation?.id ?? "hr-threshold",
+      shift_id: shiftId,
       strike_count: hr.activeViolations.length,
     });
     if (challengeTarget) {
@@ -316,7 +412,7 @@ export function PlayableElevator() {
         score: hr.score,
       });
     }
-  }, [challengeTarget, game.actionLog.length, game.level.id, hr.activeViolations, hr.lawsuit, hr.score]);
+  }, [challengeTarget, game.actionLog.length, game.level.id, hr.activeViolations, hr.lawsuit, hr.score, shiftId]);
 
   const playTone = (tone: "success" | "failure") => {
     if (!soundEnabled) return;
@@ -341,6 +437,16 @@ export function PlayableElevator() {
   const showReaction = (nextReaction: PieceReaction) => {
     setReaction(nextReaction);
     window.setTimeout(() => setReaction((current) => current === nextReaction ? null : current), 1_650);
+  };
+
+  const showIncident = (nextIncident: Omit<IncidentBeat, "serial">, duration = 1_650) => {
+    incidentSerialRef.current += 1;
+    const stamped = { ...nextIncident, serial: incidentSerialRef.current };
+    setIncident(stamped);
+    window.setTimeout(
+      () => setIncident((current) => current?.serial === stamped.serial ? null : current),
+      duration,
+    );
   };
 
   const isPressured = (placement: PiecePlacement) => {
@@ -403,7 +509,7 @@ export function PlayableElevator() {
     dragRef.current = nextDrag;
     setDrag(nextDrag);
     setPreview(null);
-    setMessage(`${getPieceDefinition(pieceId).publicName} selected. Drag it into the elevator.`);
+    setMessage(`${getCastMember(shiftId, pieceId).publicName} selected. Drag it into the elevator.`);
   };
 
   const moveDrag = (event: ReactPointerEvent<HTMLElement>) => {
@@ -416,7 +522,7 @@ export function PlayableElevator() {
     if (!activeDrag.moved) {
       activeDrag.moved = true;
       dragRef.current = activeDrag;
-      setMessage(`${getPieceDefinition(activeDrag.pieceId).publicName} is moving. Green fits; red gets documented.`);
+      setMessage(`${getCastMember(shiftId, activeDrag.pieceId).publicName} is moving. Green fits; red gets documented.`);
     }
     setPreview(pointerPreview(activeDrag.pieceId, activeDrag.rotation, event.clientX, event.clientY));
   };
@@ -458,8 +564,19 @@ export function PlayableElevator() {
         setRejectedPreview(candidate);
         window.setTimeout(() => setRejectedPreview(null), 900);
       }
+      const member = getCastMember(shiftId, pieceId);
+      setCleanStreak(0);
       setMessage("Invalid fit. The elevator rejected it before HR could pretend not to see.");
-      showReaction({ pieceId, line: FAILURE_REACTIONS[pieceId], tone: "failure" });
+      showReaction({
+        pieceId,
+        line: reactionFor(member, "failure", game.actionLog.length + invalidAttemptCounterRef.current),
+        tone: "failure",
+      });
+      showIncident({
+        label: "WORKPLACE INCIDENT",
+        line: `${member.shortName} found a space that does not exist. HR opened a file.`,
+        tone: "warning",
+      });
       playTone("failure");
       recordInvalidEmployeeDrop(pieceId, candidate);
       const reason = candidate?.violations[0]?.reason;
@@ -477,9 +594,16 @@ export function PlayableElevator() {
       rotation: candidate.rotation,
     });
     if (!result.accepted) {
+      const member = getCastMember(shiftId, pieceId);
       setInvalidPulse((value) => value + 1);
+      setCleanStreak(0);
       setMessage("That placement collided with company policy.");
-      showReaction({ pieceId, line: FAILURE_REACTIONS[pieceId], tone: "failure" });
+      showReaction({ pieceId, line: reactionFor(member, "failure", game.actionLog.length), tone: "failure" });
+      showIncident({
+        label: "POLICY COLLISION",
+        line: `${member.shortName} has requested a larger reality. Request denied.`,
+        tone: "warning",
+      });
       playTone("failure");
       recordInvalidEmployeeDrop(pieceId, result.preview ?? candidate);
       trackAnalyticsEvent("invalid_drop", {
@@ -497,27 +621,67 @@ export function PlayableElevator() {
     window.setTimeout(() => setAcceptedPreview(null), 700);
     setRotations((current) => ({ ...current, [pieceId]: candidate.rotation as Rotation }));
     const nextHr = evaluateHr(result.state, { persistentState: hrPersistentState });
+    const member = getCastMember(shiftId, pieceId);
+    const nextPlacedCount = Object.keys(result.state.placements).length;
+    const nextCleanStreak = cleanStreak + 1;
+    setCleanStreak(nextCleanStreak);
     setMessage(
       nextHr.lawsuit
         ? "HR reached 100. Legal has frozen the elevator pending Undo or Restart."
         : isSolved(result.state)
         ? result.state.level.completionLine
-        : `${getPieceDefinition(pieceId).publicName} placed. Management remains cautiously optimistic.`,
+        : `${member.publicName} placed. Management remains cautiously optimistic.`,
     );
-    showReaction({ pieceId, line: SUCCESS_REACTIONS[pieceId], tone: "success" });
+    showReaction({
+      pieceId,
+      line: reactionFor(member, "success", result.state.actionLog.length - 1),
+      tone: "success",
+    });
     playTone("success");
     trackAnalyticsEvent("valid_drop", {
       level_id: game.level.id,
       piece_id: pieceId,
       move_number: result.state.actionLog.length,
     });
-    if (isSolved(result.state) && !completionTrackedRef.current) {
+    if (isSolved(result.state) && !nextHr.lawsuit && !completionTrackedRef.current) {
+      setResultReveal(false);
+      if (resultRevealTimerRef.current !== null) {
+        window.clearTimeout(resultRevealTimerRef.current);
+        resultRevealTimerRef.current = null;
+      }
+      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+      if (reduceMotion) {
+        setResultReveal(true);
+      } else {
+        showIncident({
+          label: "DOORS CLOSING",
+          line: "Nobody made eye contact. HR documented the silence.",
+          tone: "finale",
+        }, 1_200);
+        resultRevealTimerRef.current = window.setTimeout(() => {
+          setResultReveal(true);
+          resultRevealTimerRef.current = null;
+        }, 980);
+      }
+
+      const candidateBest = { moves: result.state.actionLog.length, score: nextHr.score };
+      const currentBest = readPersonalBest(shiftId);
+      const improved = isBetterResult(candidateBest, currentBest);
+      setIsNewPersonalBest(improved);
+      if (improved) {
+        writePersonalBest(shiftId, candidateBest);
+        setPersonalBest(candidateBest);
+      } else {
+        setPersonalBest(currentBest);
+      }
+
       completionTrackedRef.current = true;
       trackAnalyticsEvent("level_completed", {
         elapsed_ms: Date.now() - startedAtRef.current,
         level_id: game.level.id,
         move_count: result.state.actionLog.length,
         score: nextHr.score,
+        shift_id: shiftId,
       });
       if (challengeTarget) {
         trackAnalyticsEvent("challenge_completed", {
@@ -530,6 +694,14 @@ export function PlayableElevator() {
           score: nextHr.score,
         });
       }
+    } else if (!nextHr.lawsuit) {
+      showIncident({
+        label: nextPlacedCount === 1 ? "ORIENTATION COMPLETE" : "SYNERGY DETECTED",
+        line: nextPlacedCount === 1
+          ? `${member.shortName} claimed the emergency exit. Confidence remains high.`
+          : `${member.shortName} has scheduled a follow-up with everyone already inside.`,
+        tone: nextHr.score >= 50 ? "warning" : "clean",
+      });
     }
   };
 
@@ -586,7 +758,7 @@ export function PlayableElevator() {
     }
 
     setRotations((current) => ({ ...current, [selectedPiece]: nextRotation }));
-    setMessage(`${getPieceDefinition(selectedPiece).publicName} rotated ${nextRotation} degrees.`);
+    setMessage(`${getCastMember(shiftId, selectedPiece).publicName} rotated ${nextRotation} degrees.`);
   };
 
   const undoLastMove = () => {
@@ -596,6 +768,13 @@ export function PlayableElevator() {
       return;
     }
     setGame(result.state);
+    completionTrackedRef.current = false;
+    setCleanStreak(0);
+    setResultReveal(false);
+    if (resultRevealTimerRef.current !== null) {
+      window.clearTimeout(resultRevealTimerRef.current);
+      resultRevealTimerRef.current = null;
+    }
     const nextHr = evaluateHr(result.state, { persistentState: hrPersistentState });
     setMessage(
       nextHr.lawsuit
@@ -621,6 +800,44 @@ export function PlayableElevator() {
     setDrag(null);
     setMessage("Floor restarted. The mandatory meeting is mandatory again.");
     setReaction(null);
+    setIncident(null);
+    setCleanStreak(0);
+    setResultReveal(false);
+    if (resultRevealTimerRef.current !== null) {
+      window.clearTimeout(resultRevealTimerRef.current);
+      resultRevealTimerRef.current = null;
+    }
+    setIsNewPersonalBest(false);
+  };
+
+  const changeShift = () => {
+    if (placedCount > 0 || challengeTarget) return;
+    const nextShiftId = getNextShiftId(shiftId);
+    setGame(createInitialState());
+    setShiftId(nextShiftId);
+    setSelectedPiece("micro-managing-ceo");
+    setRotations(INITIAL_ROTATIONS);
+    setHrPersistentState(createHrPersistentState());
+    completionTrackedRef.current = false;
+    firstGrabTrackedRef.current = false;
+    invalidAttemptCounterRef.current = 0;
+    lawsuitEpisodeTrackedRef.current = false;
+    startedAtRef.current = Date.now();
+    setPreview(null);
+    setRejectedPreview(null);
+    setAcceptedPreview(null);
+    dragRef.current = null;
+    setDrag(null);
+    setReaction(null);
+    setIncident(null);
+    setCleanStreak(0);
+    setResultReveal(false);
+    if (resultRevealTimerRef.current !== null) {
+      window.clearTimeout(resultRevealTimerRef.current);
+      resultRevealTimerRef.current = null;
+    }
+    setIsNewPersonalBest(false);
+    setMessage(`${getShift(nextShiftId).title} clocked in. Pick a coworker and start packing.`);
   };
 
   const gridCells = Array.from(
@@ -683,7 +900,7 @@ export function PlayableElevator() {
 
         {challengeTarget ? (
           <div className="playable-challenge-banner" data-testid="challenge-banner">
-            <b>Self-reported coworker run:</b>
+            <b>{getShift(challengeTarget.shiftId ?? DEFAULT_SHIFT_ID).shortTitle} coworker run:</b>
             {challengeTarget.result === "lawsuit"
               ? ` Finish below ${challengeTarget.score}% HR exposure. They lasted ${challengeTarget.moves} moves.`
               : ` Lowest HR wins. At equal HR, fewer than ${challengeTarget.moves} moves wins.`}
@@ -703,8 +920,8 @@ export function PlayableElevator() {
           <p>{game.level.briefing}</p>
           <dl>
             <div>
-              <dt>Grid</dt>
-              <dd>{game.level.grid.width} × {game.level.grid.height}</dd>
+              <dt>Target</dt>
+              <dd>PAR 3</dd>
             </div>
             <div>
               <dt>Loaded</dt>
@@ -715,6 +932,14 @@ export function PlayableElevator() {
               <dd>{game.actionLog.length}</dd>
             </div>
           </dl>
+          <div className="playable-mastery" aria-label="Run mastery target">
+            <span><b>GOLD TARGET</b> 3 moves · under 35% HR</span>
+            <span><b>CLEAN FIT</b> ×{cleanStreak}</span>
+            <span>
+              <b>PERSONAL BEST</b>{" "}
+              {personalBest ? `${personalBest.score}% · ${personalBest.moves} moves` : "Not filed yet"}
+            </span>
+          </div>
           <div className="playable-brief__legend">
             <span><i className="playable-legend playable-legend--target" />Required load zone</span>
             <span><i className="playable-legend playable-legend--valid" />Valid preview</span>
@@ -799,6 +1024,18 @@ export function PlayableElevator() {
               </div>
             ) : null}
 
+            {incident ? (
+              <div
+                aria-live="polite"
+                className={`playable-incident playable-incident--${incident.tone}`}
+                data-testid="incident-beat"
+                key={incident.serial}
+              >
+                <span>{incident.label}</span>
+                <strong>{incident.line}</strong>
+              </div>
+            ) : null}
+
             {gridCells.map((cell) => {
               const key = cellKey(cell);
               const blocked = blockedCells.has(key);
@@ -834,6 +1071,7 @@ export function PlayableElevator() {
                 placement={placement}
                 pressured={isPressured(placement)}
                 reaction={reaction}
+                shiftId={shiftId}
               />
             ))}
 
@@ -856,23 +1094,62 @@ export function PlayableElevator() {
                 ))}
               </div>
             ) : null}
+
+            {solved && !hr.lawsuit ? (
+              <div aria-hidden="true" className="playable-finale-doors">
+                <i />
+                <i />
+              </div>
+            ) : null}
           </div>
 
           <p aria-live="polite" className="playable-message" data-testid="game-message">
             {message}
           </p>
 
-          {solved && !hr.lawsuit ? (
-            <div className="playable-complete" data-testid="game-complete">
-              <span>ELEVATOR FULL</span>
-              <strong>{hr.completionRating}</strong>
-              <p>{hr.statusBand} · HR exposure {hr.score}%</p>
+          {solved && !hr.lawsuit && resultReveal ? (
+            <div
+              aria-labelledby="performance-review-title"
+              aria-live="polite"
+              className={`playable-complete playable-complete--${runVerdict.tone}`}
+              data-testid="game-complete"
+              ref={resultRef}
+              role="region"
+              tabIndex={-1}
+            >
+              <div className="playable-complete__fileline">
+                <span>CONFIDENTIAL · PERFORMANCE REVIEW</span>
+                {isNewPersonalBest ? <em>NEW PERSONAL BEST</em> : null}
+              </div>
+              <h3 id="performance-review-title">{runVerdict.title}</h3>
+              <p className="playable-complete__kicker">{runVerdict.kicker}</p>
+              <p className="playable-complete__caption">{runVerdict.caption}</p>
+              <div aria-label={`Cast from ${shift.title}`} className="playable-complete__cast">
+                {PIECE_IDS.map((pieceId) => (
+                  <span key={pieceId} title={shift.cast[pieceId].publicName}>
+                    <PieceArt pieceId={pieceId} shiftId={shiftId} />
+                    <b>{shift.cast[pieceId].shortName}</b>
+                  </span>
+                ))}
+              </div>
+              <div className="playable-complete__metrics">
+                <span><b>{hr.score}%</b> HR exposure</span>
+                <span><b>{attemptMoves}</b> moves filed</span>
+                <span><b>×{cleanStreak}</b> clean-fit chain</span>
+              </div>
               {challengeVerdict && challengeTarget ? (
                 <p className={`playable-complete__challenge playable-complete__challenge--${challengeVerdict}`}>
                   {challengeVerdict === "beat" ? "CHALLENGE BEATEN" : challengeVerdict === "tied" ? "EXACT TIE" : "TARGET MISSED"}
                   <small>{challengeTarget.score}% HR · {challengeTarget.moves} moves</small>
                 </p>
               ) : null}
+              <PerformanceReviewActions
+                boardRef={boardRef}
+                moves={attemptMoves}
+                score={hr.score}
+                shift={shift}
+                verdict={runVerdict}
+              />
               <div className="playable-complete__actions">
                 <ShareChallengeButton
                   label="CHALLENGE A COWORKER"
@@ -881,6 +1158,7 @@ export function PlayableElevator() {
                   result="completed"
                   score={hr.score}
                   showCopyFallback
+                  shiftId={shiftId}
                   surface="completion"
                 />
                 <button onClick={restartLevel} type="button">PLAY AGAIN</button>
@@ -899,8 +1177,8 @@ export function PlayableElevator() {
               <div className="playable-lawsuit__document">
                 <span className="playable-lawsuit__docket">HR-100 · FINAL NOTICE</span>
                 <strong aria-hidden="true" className="playable-lawsuit__stamp">LAWSUIT</strong>
-                <h3 id="lawsuit-title">Legal has entered the elevator.</h3>
-                <p>New placements are frozen. The underlying game state is intact.</p>
+                <h3 id="lawsuit-title">{runVerdict.title}</h3>
+                <p>{runVerdict.caption} New placements are frozen, but your last move can still be undone.</p>
                 <ol>
                   {[...hr.activeViolations]
                     .sort((a, b) => b.score - a.score)
@@ -929,6 +1207,7 @@ export function PlayableElevator() {
                     mode="challenge"
                     result="lawsuit"
                     score={hr.score}
+                    shiftId={shiftId}
                     surface="lawsuit"
                   />
                 </div>
@@ -938,6 +1217,21 @@ export function PlayableElevator() {
         </div>
 
         <aside className="playable-tray" aria-label="Movable office pieces">
+          <div className="playable-shift-switch" data-testid="shift-switch">
+            <div>
+              <span>Current shift · {SHIFTS.findIndex((candidate) => candidate.id === shiftId) + 1} of {SHIFTS.length}</span>
+              <strong>{shift.title}</strong>
+              <small>{shift.memo}</small>
+            </div>
+            <button
+              aria-label={challengeTarget ? "Coworker challenge cast is locked" : "Swap all three coworkers"}
+              disabled={placedCount > 0 || Boolean(challengeTarget)}
+              onClick={changeShift}
+              type="button"
+            >
+              {challengeTarget ? "CAST LOCKED" : placedCount > 0 ? "SHIFT STARTED" : "SWAP 3 COWORKERS"}
+            </button>
+          </div>
           <div className="playable-tray__title">
             <span>Piece rack</span>
             <strong>Drag these 3 into the elevator</strong>
@@ -952,7 +1246,7 @@ export function PlayableElevator() {
           </div>
           <div className="playable-tray__pieces">
             {PIECE_IDS.map((pieceId, index) => {
-              const definition = getPieceDefinition(pieceId);
+              const member = getCastMember(shiftId, pieceId);
               const placed = Boolean(game.placements[pieceId]);
               const selected = selectedPiece === pieceId;
               return (
@@ -964,18 +1258,18 @@ export function PlayableElevator() {
                   key={pieceId}
                   onClick={() => {
                     setSelectedPiece(pieceId);
-                    setMessage(`${definition.publicName} selected. Now tap a gold cell—or drag it into the elevator.`);
+                    setMessage(`${member.publicName} selected. Now tap a gold cell—or drag it into the elevator.`);
                   }}
                   onPointerDown={(event) => beginDrag(event, pieceId)}
                   type="button"
                 >
                   <span aria-hidden="true" className="playable-tray-piece__number">{index + 1}</span>
                   <span className="playable-tray-piece__art" style={{ transform: `rotate(${rotations[pieceId]}deg)` }}>
-                    <PieceArt pieceId={pieceId} />
+                    <PieceArt pieceId={pieceId} shiftId={shiftId} />
                   </span>
                   <span className="playable-tray-piece__copy">
-                    <strong>{definition.publicName}</strong>
-                    <small>{placed ? "Loaded · drag to move" : PIECE_NOTES[pieceId]}</small>
+                    <strong>{member.publicName}</strong>
+                    <small>{placed ? "Loaded · drag to move" : member.note}</small>
                     <em className="playable-tray-piece__cue">{placed ? "IN ELEVATOR" : selected ? "SELECTED · TAP A GOLD CELL" : "DRAG OR TAP"}</em>
                   </span>
                   <b>{rotations[pieceId]}°</b>

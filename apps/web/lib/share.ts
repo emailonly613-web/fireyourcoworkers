@@ -1,3 +1,11 @@
+import {
+  DEFAULT_SHIFT_ID,
+  getShift,
+  isShiftId,
+  type ShiftId,
+} from "../game/cast";
+import { deriveRunVerdict } from "../game/results";
+
 export type ShareResult = "completed" | "lawsuit";
 
 export interface BuildSharePayloadInput {
@@ -5,6 +13,7 @@ export interface BuildSharePayloadInput {
   score: number;
   moves: number;
   result: ShareResult;
+  shiftId?: ShiftId;
 }
 
 export interface SharePayload {
@@ -19,6 +28,7 @@ export interface ChallengeTarget {
   readonly moves: number;
   readonly result: ShareResult;
   readonly score: number;
+  readonly shiftId?: ShiftId;
 }
 
 export type ChallengeVerdict = "beat" | "tied" | "missed";
@@ -57,8 +67,26 @@ function validatedOrigin(value: string): string {
   return parsed.origin;
 }
 
-function resultText(result: ShareResult, score: number, moves: number): string {
+function resultText(
+  result: ShareResult,
+  score: number,
+  moves: number,
+  shiftId?: ShiftId,
+): string {
   const moveLabel = moves === 1 ? "move" : "moves";
+
+  if (shiftId) {
+    const verdict = deriveRunVerdict({
+      lawsuit: result === "lawsuit",
+      moves,
+      score,
+    });
+    const shift = getShift(shiftId);
+    if (result === "completed") {
+      return `${verdict.title}. I packed the ${shift.shortTitle} shift in ${moves} ${moveLabel} with ${score}% HR exposure. Beat my performance review.`;
+    }
+    return `${verdict.title}. The ${shift.shortTitle} shift ended in an HR lawsuit after ${moves} ${moveLabel}. Escape Legal.`;
+  }
 
   if (result === "completed") {
     return `I packed Floor 1 in ${moves} ${moveLabel} with ${score}% HR exposure. Can you beat it?`;
@@ -75,6 +103,7 @@ export function buildSharePayload(input: BuildSharePayloadInput): SharePayload {
   const rawMoves = clampInteger(input.moves, MAX_MOVES);
   const score = result === "lawsuit" ? MAX_SCORE : Math.min(MAX_SCORE - 1, rawScore);
   const moves = Math.max(3, rawMoves);
+  const shiftId = input.shiftId ?? DEFAULT_SHIFT_ID;
   const url = new URL("/", validatedOrigin(input.origin));
 
   url.searchParams.set("c", CHALLENGE_SCHEMA);
@@ -83,11 +112,12 @@ export function buildSharePayload(input: BuildSharePayloadInput): SharePayload {
   url.searchParams.set("target_hr", String(score));
   url.searchParams.set("target_moves", String(moves));
   url.searchParams.set("outcome", result);
+  if (input.shiftId) url.searchParams.set("shift", shiftId);
   url.hash = "play";
 
   return Object.freeze({
     title: "Fire Your Coworkers — Floor 1",
-    text: resultText(result, score, moves),
+    text: resultText(result, score, moves, input.shiftId ? shiftId : undefined),
     url: url.toString(),
   });
 }
@@ -116,6 +146,7 @@ export function parseChallengeTarget(search: string): ChallengeTarget | null {
   const scoreValue = readSingle(params, "target_hr");
   const movesValue = readSingle(params, "target_moves");
   const resultValue = readSingle(params, "outcome");
+  const shiftValue = readSingle(params, "shift");
 
   if (
     schema !== CHALLENGE_SCHEMA ||
@@ -125,6 +156,8 @@ export function parseChallengeTarget(search: string): ChallengeTarget | null {
   if (!scoreValue || !/^\d{1,3}$/.test(scoreValue)) return null;
   if (!movesValue || !/^\d{1,6}$/.test(movesValue)) return null;
   if (!resultValue || !(SHARE_RESULTS as readonly string[]).includes(resultValue)) return null;
+  if (params.has("shift") && shiftValue === null) return null;
+  if (shiftValue !== null && !isShiftId(shiftValue)) return null;
 
   const score = Number(scoreValue);
   const moves = Number(movesValue);
@@ -139,6 +172,7 @@ export function parseChallengeTarget(search: string): ChallengeTarget | null {
     moves,
     result: resultValue as ShareResult,
     score,
+    ...(shiftValue ? { shiftId: shiftValue as ShiftId } : {}),
   });
 }
 

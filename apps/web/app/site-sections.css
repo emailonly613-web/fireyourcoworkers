@@ -159,6 +159,75 @@
   border-bottom: 1px solid rgba(183, 216, 238, 0.18);
 }
 
+.site-character-roster {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 34px 0 clamp(68px, 8vw, 108px);
+}
+
+.site-character-roster article {
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.015)),
+    #0b1e2b;
+  border: 1px solid rgba(181, 220, 240, 0.2);
+  display: grid;
+  grid-template-rows: auto 110px auto auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 10px;
+  position: relative;
+}
+
+.site-character-roster article::after {
+  background: var(--site-yellow);
+  bottom: 0;
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.site-character-roster__alternate::after {
+  background: #d94c83 !important;
+}
+
+.site-character-roster article > span {
+  color: var(--site-yellow);
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-character-roster__alternate > span {
+  color: #ff7caf !important;
+}
+
+.site-character-roster__art {
+  align-self: center;
+  filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.48));
+  height: 104px;
+  justify-self: center;
+  max-width: 100%;
+  width: 100%;
+}
+
+.site-character-roster article > strong {
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 12px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.site-character-roster article > p {
+  color: #8fa5b3;
+  font-size: 8px;
+  line-height: 1.35;
+  margin: 6px 0 0;
+}
+
 .site-character {
   align-items: center;
   border-top: 1px solid rgba(183, 216, 238, 0.18);
@@ -1015,5 +1084,28 @@
   .site-text-link span,
   .site-primary-link {
     transition: none;
+  }
+}
+
+@media (max-width: 1050px) {
+  .site-character-roster {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .site-character-roster {
+    gap: 7px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 54px;
+  }
+
+  .site-character-roster article {
+    grid-template-rows: auto 88px auto auto;
+    padding: 8px;
+  }
+
+  .site-character-roster__art {
+    height: 84px;
   }
 }

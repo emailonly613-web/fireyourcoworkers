@@ -3,6 +3,11 @@ import {
   MicroManagingCeo,
   SleepingIntern,
 } from "@/components/characters/CharacterArt";
+import {
+  BurnedOutEngineer,
+  CoffeeMachine,
+  ReplyAllDirector,
+} from "@/components/characters/ShiftCharacterArt";
 import { InstallControl } from "@/components/InstallControl";
 import { ReplayAnalytics } from "@/components/ReplayAnalytics";
 
@@ -39,12 +44,51 @@ export function SiteSections() {
         <div aria-hidden="true" className="site-paper site-paper--two" />
         <header className="site-section-heading">
           <p className="site-kicker">Meet the office disasters</p>
-          <h2 id="character-world-title">Every bad fit has a personality.</h2>
+          <h2 id="character-world-title">Six disasters. Two shifts. No personal space.</h2>
           <p>
             The elevator is small. The egos, equipment, and employment liabilities are not.
             Learn who bends, who blocks the doors, and who turns one move into an HR incident.
           </p>
         </header>
+
+        <div aria-label="Six-character launch roster" className="site-character-roster">
+          <article>
+            <span>FOUNDERS · 01</span>
+            <SleepingIntern className="site-character-roster__art" />
+            <strong>Sleeping Intern</strong>
+            <p>Available in horizontal.</p>
+          </article>
+          <article>
+            <span>FOUNDERS · 02</span>
+            <MicroManagingCeo className="site-character-roster__art" />
+            <strong>Micro-Managing CEO</strong>
+            <p>Delegates spatial awareness.</p>
+          </article>
+          <article>
+            <span>FOUNDERS · 03</span>
+            <BrokenCopyMachine className="site-character-roster__art" />
+            <strong>Broken Copy Machine</strong>
+            <p>Paperwork with a power cable.</p>
+          </article>
+          <article className="site-character-roster__alternate">
+            <span>AFTER HOURS · 04</span>
+            <BurnedOutEngineer className="site-character-roster__art" />
+            <strong>Burned-Out Engineer</strong>
+            <p>Horizontally scaling since 2:14 a.m.</p>
+          </article>
+          <article className="site-character-roster__alternate">
+            <span>AFTER HOURS · 05</span>
+            <ReplyAllDirector className="site-character-roster__art" />
+            <strong>Reply-All Director</strong>
+            <p>Looping in the whole elevator.</p>
+          </article>
+          <article className="site-character-roster__alternate">
+            <span>AFTER HOURS · 06</span>
+            <CoffeeMachine className="site-character-roster__art" />
+            <strong>Office Coffee Machine</strong>
+            <p>Employee retention infrastructure.</p>
+          </article>
+        </div>
 
         <div className="site-character-lineup">
           <article className="site-character" id="sleeping-intern">

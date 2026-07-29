@@ -175,6 +175,25 @@ describe("Floor 1 share payload", () => {
     });
   });
 
+  it("preserves the selected cast shift and adds an identity verdict", () => {
+    const payload = buildSharePayload({
+      origin: "https://fireyourcoworkers.com",
+      score: 28,
+      moves: 3,
+      result: "completed",
+      shiftId: "after-hours-engineering",
+    });
+    const url = new URL(payload.url);
+
+    expect(url.searchParams.get("shift")).toBe("after-hours-engineering");
+    expect(payload.text).toContain("CHIEF COMPRESSION OFFICER");
+    expect(payload.text).toContain("After Hours shift");
+    expect(parseChallengeTarget(url.search)).toMatchObject({
+      shiftId: "after-hours-engineering",
+    });
+    expect(parseChallengeTarget(`${url.search}&shift=untrusted`)).toBeNull();
+  });
+
   it("compares challenge results by lower HR exposure, then fewer moves", () => {
     const target = parseChallengeTarget(
       "?c=v1&level=mandatory-elevator-meeting&floor=v1&target_hr=42&target_moves=5&outcome=completed",
