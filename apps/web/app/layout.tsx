@@ -12,6 +12,13 @@ export const metadata: Metadata = {
   description:
     "A cinematic office-packing comedy game. Fit the team in the elevator before HR files the paperwork.",
   applicationName: "Fire Your Coworkers",
+  icons: {
+    icon: [
+      { url: "/icons/app-icon.svg", type: "image/svg+xml" },
+      { url: "/icons/app-icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: [{ url: "/icons/app-icon-192.png", sizes: "192x192" }],
+  },
   openGraph: {
     title: "Fire Your Coworkers",
     description: "Pack the office. Survive HR.",
