@@ -113,3 +113,23 @@ emailonly613-web/fireyourcoworkers via plain-git source. DNS zone auto-created.
 Redeploy after any push: doctl apps create-deployment 8678783b-ec62-49d2-9758-b29d074c34e8
 
 Next: v2 milestone 3 — analytics on the four gating metrics.
+
+---
+
+## CINEMATIC PASS SHIPPED — 2026-07-29 ~13:53 UTC (deployment 65ee04c4, ACTIVE)
+
+Context: operator relayed a design critique that described a DIFFERENT artifact (emoji
+characters, SaaS landing copy, "How it plays" cards — none exist on this site; verified
+against production screenshots). Three directional points DID apply and were fixed:
+
+1. Desktop void -> office atrium background (window-light walls, dust, drifting papers).
+2. Dead first screen -> "living poster" side elevator cars visible on entry (>=1040px):
+   CEO crowned + furious squirming against the glass, intern asleep breathing, copier
+   rattling and firing papers on loop. Pure scenery, cannot touch gameplay.
+3. Characters too small -> tray raised to 27%, rack pieces now up to 96% of grid scale.
+4. Shaft now reads as an elevator car: ceiling light strip, brushed back wall, handrail
+   glow, cables above, deeper glass.
+
+Proof: local verify 23/23 + e2e 74/74 BEFORE push; production liveproof HTTP 200 + seam,
+production e2e sample 74/74 AFTER deploy. Screenshots: web/proof/prod-desktop-1440x900.png,
+prod-mobile-390x844.png.

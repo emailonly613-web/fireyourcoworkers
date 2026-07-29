@@ -6,6 +6,7 @@
 <title>Fire Your Coworkers</title>
 <meta name="description" content="Pack your coworkers into the elevator. They will not enjoy it.">
 <meta name="theme-color" content="#0b0f14">
+<meta name="fyc-build" content="3-cinematic">
 <meta property="og:title" content="Fire Your Coworkers">
 <meta property="og:description" content="The satirical elevator-packing puzzle. Squish responsibly.">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1288,11 +1289,14 @@ window.addEventListener("orientationchange",()=>setTimeout(layout,120));
   load(start);
 })();
 
-/* PWA: register the service worker only where it can actually work. */
+/* PWA: register the service worker only where it can actually work, and actively check
+   for a newer worker on every visit so no visitor stays pinned to an old build. */
 if(typeof navigator!=="undefined" && "serviceWorker" in navigator
    && window.location && /^https?:$/.test(window.location.protocol)){
   window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("sw.js").catch(()=>{});
+    navigator.serviceWorker.register("sw.js")
+      .then(reg=>{ try{ reg.update(); }catch(e){} })
+      .catch(()=>{});
   });
 }
 
