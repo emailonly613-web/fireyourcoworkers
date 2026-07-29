@@ -37,6 +37,8 @@ Date: 2026-07-29
 - Eight truthful social concepts exported in MP4 and WebM, plus real desktop and mobile
   browser gameplay recordings.
 - Isolated public preview deployed from commit `8d62473f2773cc70981bfe866e81f3d6938d21d3`.
+- Production replacement deployed from commit `4146dd339eec2ce0d654257a6ae68b3ca78124ae`
+  to `https://fireyourcoworkers.com/` after explicit founder approval.
 
 ## Proof files
 
@@ -109,11 +111,24 @@ Date: 2026-07-29
   deployed; zero console errors were observed while the real 99→100 lawsuit path ran.
 - Social creative package: PASS; 8/8 concepts are present in both MP4 and WebM and satisfy
   the 1080×1920, 30 fps, six-second, yuv420p, silent export contract.
+- Production cutover: PASS; the existing DigitalOcean app is ACTIVE on deployment
+  `952e8f48-ce52-443b-8655-8a32daeff856`, serving `public-preview/` from the approved release
+  commit while preserving the apex and `www` domain attachments.
+- Production live browser: PASS; clean apex HTML contains the living hero and integrated
+  game, contains no obsolete public codename, has no horizontal overflow at the observed
+  mobile viewport, and reports zero console warnings or errors.
+- Production gameplay: PASS; a rejected placement preserved state and the exact three-piece
+  deterministic solution reached `Elevator full. Technically legal.`
+- Production metadata/assets: PASS; canonical and Open Graph URLs use the apex, the social
+  image is 1200×630, all three PWA icons and both manifest screenshots have their declared
+  dimensions, the favicon renders at 192×192, and the clean 404 document is live.
 
 ## Checkpoint boundary
 
 The isolated Checkpoint 6 public preview, PWA runtime, offline starter level, anonymous
 event adapter, clean-console gate, gameplay recordings, and eight-creative package are verified.
 
-**PRODUCTION CUTOVER: NOT DONE.** The production app and custom domain remain separate from
-this verified preview; no replacement production deployment is claimed.
+**PRODUCTION CUTOVER: PASS.** The approved replacement is live at
+`https://fireyourcoworkers.com/`. The rejected deployment
+`bbbfd9d7-c9ea-4548-9da9-04ce11fd3ca1` and Git tag
+`codex-takeover-baseline-2026-07-29` remain the rollback points.

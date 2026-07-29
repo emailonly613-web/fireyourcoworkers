@@ -16,8 +16,9 @@ critical path for Checkpoints 3–6.
 - HERO: PASS — living desktop and mobile hero implemented and verified.
 - PLAYABLE GAME: PASS — deterministic integrated level plus visible HR rules, cosmetic squish, reactions, a recoverable 100% lawsuit sequence, and compliance-aware completion.
 - MOBILE: PASS — complete 390 px root-page proof with no horizontal overflow; tablet also passes at 768×1024.
-- PWA: PASS for the isolated public preview — manifest and install assets return 200,
-  Chromium is controlled by `/sw.js`, and the starter level survives an offline reload.
+- PWA: PASS — the production domain serves the manifest, service worker, install assets,
+  and screenshots; Chromium is controlled by `/sw.js`. The identical starter-level build
+  previously passed the offline-reload proof.
 - ANALYTICS: PASS for anonymous client event creation — all nine approved event names were
   observed in live interaction and published through the local dataLayer adapter. External
   analytics delivery is not configured or claimed.
@@ -29,8 +30,12 @@ critical path for Checkpoints 3–6.
   `8d62473f2773cc70981bfe866e81f3d6938d21d3`.
 - PUBLIC PREVIEW CONSOLE: PASS — explicit SVG/PNG icons are deployed and a fresh desktop
   Chromium run produced zero console errors while exercising the live 99→100 lawsuit path.
-- PRODUCTION CUTOVER: NOT DONE — the production app/custom domain remain separate and no
-  replacement cutover is claimed.
+- PRODUCTION CUTOVER: PASS — `https://fireyourcoworkers.com/` now serves the Codex build
+  from commit `4146dd339eec2ce0d654257a6ae68b3ca78124ae` in ACTIVE deployment
+  `952e8f48-ce52-443b-8655-8a32daeff856`. The apex and `www` attachments remain ACTIVE.
+- PRODUCTION CONSOLE AND GAME: PASS — a clean-domain browser run produced zero warnings
+  or errors, rejected an invalid placement, accepted the three-move deterministic solution,
+  and displayed `Elevator full. Technically legal.`
 
 ## SEO override status
 
@@ -38,14 +43,16 @@ critical path for Checkpoints 3–6.
 - SOURCE VERIFICATION: PASS — standalone file, ZIP entry, and extracted file share SHA-256 `5894D3AA46F8C6B410084125BA7E5941ED263EB5D203BEA4B5617F7AD3559B01`.
 - ROUTES CREATED: `/` only in the new app.
 - INDEX / NOINDEX DECISIONS: launch inventory mapped in `docs/SEO-LAUNCH-PLAN.md`; not yet implemented.
-- METADATA: partial root metadata only; typed route-wide generator pending.
+- METADATA: root title, description, self-canonical apex, Open Graph URL/image, and Twitter
+  large-image card are live; a typed route-wide generator remains pending with future routes.
 - SCHEMA: pending; `SoftwareApplication` deliberately withheld until the PWA/game claims are truthful.
 - SITEMAPS: pending.
 - ROBOTS: pending.
 - PERFORMANCE: production build passes; Lighthouse and field-style proof pending.
 - RENDERED PROOF: living hero only; full SEO rendered-HTML proof pending.
 - SEARCH CONSOLE / BING: verification values and production access not configured.
-- DEFECTS: the current hero lacks the completed crawlable route graph and launch content slice required by the SEO override.
+- DEFECTS: the crawlable route graph, sitemap, robots policy, structured data, and the
+  apex-preserving `www` redirect remain for the collaborative SEO phase.
 
 ## Baseline proof
 
@@ -64,6 +71,6 @@ critical path for Checkpoints 3–6.
 
 ## Exact next task
 
-Founder review of the isolated public preview and proof package. Production remains untouched
-until explicit cutover approval. Expanded SEO is the next collaborative lane after this
-product-first preview, as directed.
+Founder review of the live replacement at `https://fireyourcoworkers.com/`, followed by
+fine tuning and the expanded SEO lane as directed. The rejected production deployment remains
+available as the documented rollback target.

@@ -1,14 +1,15 @@
-FIRE YOUR COWORKERS - PUBLIC PREVIEW
+FIRE YOUR COWORKERS - LIVE PRODUCTION
 
-URL=https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/
+URL=https://fireyourcoworkers.com/
 STATUS=LIVE
 HTTP_STATUS=200
-APP_ID=aeb54a47-abb1-419d-88f9-a64dc9546e50
-DEPLOYMENT_ID=d5f5c146-3c46-4d9d-8046-a4268aa35d0c
+APP_ID=8678783b-ec62-49d2-9758-b29d074c34e8
+DEPLOYMENT_ID=952e8f48-ce52-443b-8655-8a32daeff856
 DEPLOYMENT_PHASE=ACTIVE
-DEPLOYED_COMMIT=8d62473f2773cc70981bfe866e81f3d6938d21d3
-VERIFIED_AT=2026-07-29T12:20:10-04:00
+DEPLOYED_COMMIT=4146dd339eec2ce0d654257a6ae68b3ca78124ae
+VERIFIED_AT=2026-07-29T13:48:28-04:00
 
-PRODUCTION_CUTOVER=NOT_DONE
-This is the isolated Codex public preview. It is not evidence that the replacement
-has been cut over to the production app or custom domain.
+PRODUCTION_CUTOVER=PASS
+PREVIEW_URL=https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/
+The production custom domain now serves the approved Codex replacement. The isolated
+preview remains available as a separate reference deployment.
