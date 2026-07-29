@@ -256,7 +256,7 @@ describe("Checkpoint 6 anonymous analytics contract", () => {
     vi.restoreAllMocks();
   });
 
-  it("emits and sanitizes all nine approved events without a network request", () => {
+  it("emits and sanitizes all approved events without a network request", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     trackAnalyticsEvent("page_view", { surface: "home" });
     trackAnalyticsEvent("play_started", { level_id: " FLOOR_001 ", source: "hero" });
@@ -298,11 +298,27 @@ describe("Checkpoint 6 anonymous analytics contract", () => {
       surface: "completion",
       result: "prompted",
     });
+    trackAnalyticsEvent("share_selected", {
+      level_id: "floor_001",
+      surface: "completion",
+      method: "clipboard",
+      outcome: "copied",
+    });
+    trackAnalyticsEvent("challenge_opened", {
+      level_id: "floor_001",
+      target_result: "completed",
+    });
+    trackAnalyticsEvent("challenge_completed", {
+      level_id: "floor_001",
+      move_count: 3,
+      score: 28,
+      outcome: "tied",
+    });
 
     const events = getBufferedAnalyticsEvents();
     expect(events.map(({ event }) => event)).toEqual(ANALYTICS_EVENT_NAMES);
-    expect(events).toHaveLength(9);
-    expect(analyticsGlobal.dataLayer).toHaveLength(9);
+    expect(events).toHaveLength(12);
+    expect(analyticsGlobal.dataLayer).toHaveLength(12);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(events[1]?.properties.level_id).toBe("floor_001");
     expect(events[4]?.properties).toEqual({

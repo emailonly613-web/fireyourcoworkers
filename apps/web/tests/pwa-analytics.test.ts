@@ -162,6 +162,9 @@ describe("anonymous analytics adapter", () => {
       "lawsuit_triggered",
       "replay_viewed",
       "install_cta_selected",
+      "share_selected",
+      "challenge_opened",
+      "challenge_completed",
     ]);
   });
 

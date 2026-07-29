@@ -13,6 +13,8 @@ import {
   MicroManagingCeo,
   SleepingIntern,
 } from "@/components/characters/CharacterArt";
+import { GameTutorial } from "@/components/game/GameTutorial";
+import { ShareChallengeButton } from "@/components/share/ShareChallengeButton";
 import {
   HR_RULE_DEFINITIONS,
   PIECE_IDS,
@@ -25,7 +27,6 @@ import {
   normalizeRotation,
   placePiece,
   previewPlacement,
-  restart,
   undo,
   type Cell,
   type GameState,
@@ -37,6 +38,8 @@ import {
   type Rotation,
 } from "@/game";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { compareChallengeResult, parseChallengeTarget } from "@/lib/share";
+import { markTutorialSeen, shouldShowTutorial } from "@/lib/tutorial";
 
 type RotationMap = Record<PieceId, Rotation>;
 
@@ -194,10 +197,15 @@ export function PlayableElevator() {
   const [invalidPulse, setInvalidPulse] = useState(0);
   const [reaction, setReaction] = useState<PieceReaction | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [challengeTarget, setChallengeTarget] = useState<ReturnType<typeof parseChallengeTarget>>(null);
+  const [challengeInvalid, setChallengeInvalid] = useState(false);
   const [hrPersistentState, setHrPersistentState] = useState<HrPersistentState>(() =>
     createHrPersistentState(),
   );
   const boardRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const tutorialTriggerRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const firstGrabTrackedRef = useRef(false);
   const completionTrackedRef = useRef(false);
@@ -220,6 +228,10 @@ export function PlayableElevator() {
   );
   const inputLocked = solved || hr.lawsuit;
   const placedCount = Object.keys(game.placements).length;
+  const attemptMoves = game.actionLog.length;
+  const challengeVerdict = solved && challengeTarget
+    ? compareChallengeResult(challengeTarget, { moves: attemptMoves, score: hr.score })
+    : null;
   const activeRulesById = useMemo(
     () => new Map(hr.activeViolations.map((violation) => [violation.id, violation])),
     [hr.activeViolations],
@@ -228,6 +240,59 @@ export function PlayableElevator() {
     () => new Set(hr.activeViolations.flatMap(({ evidence }) => evidence.pieceIds)),
     [hr.activeViolations],
   );
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const incomingChallenge = parseChallengeTarget(window.location.search);
+    setChallengeTarget(incomingChallenge);
+    setChallengeInvalid(params.has("c") && !incomingChallenge);
+    if (incomingChallenge) {
+      trackAnalyticsEvent("challenge_opened", {
+        level_id: incomingChallenge.levelId,
+        target_result: incomingChallenge.result,
+      });
+    }
+    if (incomingChallenge || window.location.hash === "#play") {
+      window.setTimeout(
+        () => stage.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" }),
+        320,
+      );
+    }
+    if (params.get("tutorial") === "1") {
+      setTutorialOpen(true);
+      return;
+    }
+    if (incomingChallenge) return;
+    if (!shouldShowTutorial()) return;
+
+    if (typeof IntersectionObserver !== "function") {
+      setTutorialOpen(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setTutorialOpen(true);
+        observer.disconnect();
+      },
+      { rootMargin: "-8% 0px -8%", threshold: 0.12 },
+    );
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  const dismissTutorial = () => {
+    markTutorialSeen();
+    setTutorialOpen(false);
+    window.setTimeout(() => {
+      tutorialTriggerRef.current?.focus({ preventScroll: true });
+      stageRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+    }, 0);
+  };
 
   useEffect(() => {
     if (!hr.lawsuit) {
@@ -243,7 +308,15 @@ export function PlayableElevator() {
       rule_id: topViolation?.id ?? "hr-threshold",
       strike_count: hr.activeViolations.length,
     });
-  }, [game.level.id, hr.activeViolations, hr.lawsuit]);
+    if (challengeTarget) {
+      trackAnalyticsEvent("challenge_completed", {
+        level_id: game.level.id,
+        move_count: game.actionLog.length,
+        outcome: "lawsuit",
+        score: hr.score,
+      });
+    }
+  }, [challengeTarget, game.actionLog.length, game.level.id, hr.activeViolations, hr.lawsuit, hr.score]);
 
   const playTone = (tone: "success" | "failure") => {
     if (!soundEnabled) return;
@@ -312,6 +385,12 @@ export function PlayableElevator() {
         level_id: game.level.id,
         piece_id: pieceId,
       });
+      if (challengeTarget) {
+        trackAnalyticsEvent("play_started", {
+          level_id: game.level.id,
+          source: "challenge",
+        });
+      }
     }
     const nextDrag = {
       moved: false,
@@ -440,6 +519,17 @@ export function PlayableElevator() {
         move_count: result.state.actionLog.length,
         score: nextHr.score,
       });
+      if (challengeTarget) {
+        trackAnalyticsEvent("challenge_completed", {
+          level_id: game.level.id,
+          move_count: result.state.actionLog.length,
+          outcome: compareChallengeResult(challengeTarget, {
+            moves: result.state.actionLog.length,
+            score: nextHr.score,
+          }),
+          score: nextHr.score,
+        });
+      }
     }
   };
 
@@ -515,8 +605,7 @@ export function PlayableElevator() {
   };
 
   const restartLevel = () => {
-    const result = restart(game);
-    setGame(result.state);
+    setGame(createInitialState());
     setRotations(INITIAL_ROTATIONS);
     setSelectedPiece("micro-managing-ceo");
     setHrPersistentState(createHrPersistentState());
@@ -547,7 +636,7 @@ export function PlayableElevator() {
     <section
       aria-labelledby="playable-title"
       className="playable-showcase"
-      id="play"
+      id="game"
       onPointerCancel={endDrag}
       onPointerMove={moveDrag}
       onPointerUp={endDrag}
@@ -564,7 +653,50 @@ export function PlayableElevator() {
         </p>
       </header>
 
-      <div className="playable-layout">
+      <div className="playable-stage" data-testid="playable-stage" id="play" ref={stageRef}>
+        <div className="playable-stage__toolbar">
+          <ol aria-label="How to play in three steps" className="playable-micro-guide">
+            <li><b>1</b> Pick a piece</li>
+            <li><b>2</b> Drag or tap</li>
+            <li><b>3</b> Fill the gold zone</li>
+          </ol>
+          <div className="playable-stage__actions">
+            <button
+              aria-haspopup="dialog"
+              className="playable-help-button"
+              data-testid="how-to-play"
+              onClick={() => setTutorialOpen(true)}
+              ref={tutorialTriggerRef}
+              type="button"
+            >
+              <b aria-hidden="true">?</b>
+              HOW TO PLAY
+            </button>
+            <ShareChallengeButton
+              moves={game.actionLog.length}
+              result="completed"
+              score={hr.score}
+              surface="game"
+            />
+          </div>
+        </div>
+
+        {challengeTarget ? (
+          <div className="playable-challenge-banner" data-testid="challenge-banner">
+            <b>Self-reported coworker run:</b>
+            {challengeTarget.result === "lawsuit"
+              ? ` Finish below ${challengeTarget.score}% HR exposure. They lasted ${challengeTarget.moves} moves.`
+              : ` Lowest HR wins. At equal HR, fewer than ${challengeTarget.moves} moves wins.`}
+          </div>
+        ) : null}
+
+        {challengeInvalid ? (
+          <div className="playable-challenge-banner playable-challenge-banner--invalid" data-testid="challenge-invalid">
+            <b>Challenge link unavailable.</b> Loading the current Floor 1 instead.
+          </div>
+        ) : null}
+
+        <div className="playable-layout">
         <aside className="playable-brief" aria-label="Level briefing">
           <p className="playable-brief__eyebrow">Today&apos;s mandatory objective</p>
           <h3>{game.level.title}</h3>
@@ -626,14 +758,20 @@ export function PlayableElevator() {
           </section>
         </aside>
 
-        <div className={`playable-elevator${invalidPulse ? " playable-elevator--has-rejected" : ""}${hr.lawsuit ? " playable-elevator--lawsuit" : ""}`} key={invalidPulse}>
+        <div className={`playable-elevator${invalidPulse ? " playable-elevator--has-rejected" : ""}${acceptedPreview ? " playable-elevator--accepted" : ""}${hr.lawsuit ? " playable-elevator--lawsuit" : ""}`} key={invalidPulse}>
           <div className="playable-elevator__header">
             <span className="playable-elevator__badge">HR</span>
+            <span aria-label="Floor 1" className="playable-elevator__floor">01<i aria-hidden="true">▲</i></span>
             <div>
               <strong>{hr.statusBand.toUpperCase()}</strong>
               <span>{solved ? "ELEVATOR FULL" : `${placedCount} OF ${game.level.pieces.length} LOADED`}</span>
             </div>
             <b>{hr.score}%</b>
+          </div>
+
+          <div aria-hidden="true" className="playable-elevator__call-panel">
+            <i />
+            <b />
           </div>
 
           <div
@@ -645,6 +783,22 @@ export function PlayableElevator() {
               gridTemplateRows: `repeat(${game.level.grid.height}, 1fr)`,
             }}
           >
+            <div aria-hidden="true" className="playable-board__cabin">
+              <span className="playable-board__ceiling" />
+              <span className="playable-board__wall playable-board__wall--left" />
+              <span className="playable-board__wall playable-board__wall--right" />
+              <span className="playable-board__floor-plane" />
+              <span className="playable-board__door-seam" />
+              <span className="playable-board__reflection" />
+            </div>
+
+            {placedCount === 0 ? (
+              <div aria-hidden="true" className="playable-empty-guide">
+                <strong>DROP ZONE</strong>
+                <span>Pick a piece above or beside the elevator, then tap a gold cell.</span>
+              </div>
+            ) : null}
+
             {gridCells.map((cell) => {
               const key = cellKey(cell);
               const blocked = blockedCells.has(key);
@@ -713,6 +867,24 @@ export function PlayableElevator() {
               <span>ELEVATOR FULL</span>
               <strong>{hr.completionRating}</strong>
               <p>{hr.statusBand} · HR exposure {hr.score}%</p>
+              {challengeVerdict && challengeTarget ? (
+                <p className={`playable-complete__challenge playable-complete__challenge--${challengeVerdict}`}>
+                  {challengeVerdict === "beat" ? "CHALLENGE BEATEN" : challengeVerdict === "tied" ? "EXACT TIE" : "TARGET MISSED"}
+                  <small>{challengeTarget.score}% HR · {challengeTarget.moves} moves</small>
+                </p>
+              ) : null}
+              <div className="playable-complete__actions">
+                <ShareChallengeButton
+                  label="CHALLENGE A COWORKER"
+                  moves={game.actionLog.length}
+                  mode="challenge"
+                  result="completed"
+                  score={hr.score}
+                  showCopyFallback
+                  surface="completion"
+                />
+                <button onClick={restartLevel} type="button">PLAY AGAIN</button>
+              </div>
             </div>
           ) : null}
 
@@ -751,6 +923,14 @@ export function PlayableElevator() {
                   <button data-testid="lawsuit-restart" onClick={restartLevel} type="button">
                     Restart floor
                   </button>
+                  <ShareChallengeButton
+                    label="SHARE THE LAWSUIT"
+                    moves={game.actionLog.length}
+                    mode="challenge"
+                    result="lawsuit"
+                    score={hr.score}
+                    surface="lawsuit"
+                  />
                 </div>
               </div>
             </div>
@@ -759,8 +939,8 @@ export function PlayableElevator() {
 
         <aside className="playable-tray" aria-label="Movable office pieces">
           <div className="playable-tray__title">
-            <span>Drag queue</span>
-            <strong>Select, rotate, place</strong>
+            <span>Piece rack</span>
+            <strong>Drag these 3 into the elevator</strong>
             <button
               aria-pressed={soundEnabled}
               className="playable-sound"
@@ -771,7 +951,7 @@ export function PlayableElevator() {
             </button>
           </div>
           <div className="playable-tray__pieces">
-            {PIECE_IDS.map((pieceId) => {
+            {PIECE_IDS.map((pieceId, index) => {
               const definition = getPieceDefinition(pieceId);
               const placed = Boolean(game.placements[pieceId]);
               const selected = selectedPiece === pieceId;
@@ -782,16 +962,21 @@ export function PlayableElevator() {
                   data-testid={`tray-${pieceId}`}
                   disabled={inputLocked}
                   key={pieceId}
-                  onClick={() => setSelectedPiece(pieceId)}
+                  onClick={() => {
+                    setSelectedPiece(pieceId);
+                    setMessage(`${definition.publicName} selected. Now tap a gold cell—or drag it into the elevator.`);
+                  }}
                   onPointerDown={(event) => beginDrag(event, pieceId)}
                   type="button"
                 >
+                  <span aria-hidden="true" className="playable-tray-piece__number">{index + 1}</span>
                   <span className="playable-tray-piece__art" style={{ transform: `rotate(${rotations[pieceId]}deg)` }}>
                     <PieceArt pieceId={pieceId} />
                   </span>
                   <span className="playable-tray-piece__copy">
                     <strong>{definition.publicName}</strong>
                     <small>{placed ? "Loaded · drag to move" : PIECE_NOTES[pieceId]}</small>
+                    <em className="playable-tray-piece__cue">{placed ? "IN ELEVATOR" : selected ? "SELECTED · TAP A GOLD CELL" : "DRAG OR TAP"}</em>
                   </span>
                   <b>{rotations[pieceId]}°</b>
                 </button>
@@ -814,12 +999,14 @@ export function PlayableElevator() {
             </button>
           </div>
         </aside>
+        </div>
       </div>
 
       <p className="playable-access-note">
         Mouse, touch, and keyboard cell placement are supported. Drag surfaces disable page
         scrolling only while a piece is under your control.
       </p>
+      <GameTutorial open={tutorialOpen} onDismiss={dismissTutorial} />
     </section>
   );
 }

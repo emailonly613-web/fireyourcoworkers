@@ -7,6 +7,7 @@ import {
   SleepingIntern,
 } from "@/components/characters/CharacterArt";
 import { HERO_SENTENCE, HERO_STEPS } from "@/components/hero-content";
+import { ShareChallengeButton } from "@/components/share/ShareChallengeButton";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const clamp = (value: number, minimum: number, maximum: number) =>
@@ -147,7 +148,8 @@ export function LivingHero() {
             <span aria-hidden="true">▶</span>
             {chaosStarted ? "HR NOTICED" : "PLAY NOW"}
           </button>
-          <span className="hero-actions__hint">No account. No tutorial wall. Just poor management.</span>
+          <ShareChallengeButton className="hero-share" label="SHARE" surface="hero" />
+          <span className="hero-actions__hint">Three pieces. One quick orientation. Infinite paperwork.</span>
         </div>
       </div>
 

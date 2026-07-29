@@ -548,6 +548,19 @@ a:focus-visible {
   gap: 14px;
 }
 
+.hero-share .share-challenge-button {
+  border-radius: 12px;
+  box-shadow: 0 6px 0 #650912, 0 13px 30px rgba(0, 0, 0, 0.48);
+  font-size: 12px;
+  min-height: 55px;
+  min-width: 112px;
+}
+
+.hero-share .share-challenge-button__feedback {
+  bottom: calc(100% + 10px);
+  top: auto;
+}
+
 .play-button {
   align-items: center;
   background: linear-gradient(180deg, #ffe35f 0%, #ffb820 58%, #ea8614 100%);
@@ -862,13 +875,22 @@ a:focus-visible {
   }
 
   .hero-actions {
+    gap: 9px;
     justify-content: center;
   }
 
   .play-button {
     font-size: 17px;
     min-height: 52px;
-    min-width: min(72vw, 260px);
+    min-width: min(55vw, 218px);
+    padding-inline: 16px;
+  }
+
+  .hero-share .share-challenge-button {
+    font-size: 10px;
+    min-height: 49px;
+    min-width: 92px;
+    padding-inline: 10px;
   }
 
   .hero-actions__hint {

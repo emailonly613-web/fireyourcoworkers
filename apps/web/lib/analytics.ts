@@ -8,6 +8,9 @@ export const ANALYTICS_EVENT_NAMES = [
   "lawsuit_triggered",
   "replay_viewed",
   "install_cta_selected",
+  "share_selected",
+  "challenge_opened",
+  "challenge_completed",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
@@ -18,6 +21,11 @@ type DropFailure = "out_of_bounds" | "overlap" | "hr_rule" | "unknown";
 type ReplaySource = "challenge" | "highlight" | "creator" | "unknown";
 type InstallSurface = "hero" | "menu" | "completion" | "unknown";
 type InstallResult = "prompted" | "instructions" | "unavailable";
+type ShareSurface = "hero" | "game" | "completion" | "lawsuit";
+type ShareMethod = "web_share" | "clipboard" | "manual";
+type ShareOutcome = "shared" | "copied" | "canceled" | "manual";
+type ChallengeResult = "completed" | "lawsuit";
+type ChallengeOutcome = "beat" | "tied" | "missed" | "lawsuit";
 
 export interface AnalyticsEventPayloadMap {
   page_view: { surface: PageSurface };
@@ -39,6 +47,19 @@ export interface AnalyticsEventPayloadMap {
   lawsuit_triggered: { level_id: string; rule_id: string; strike_count: number };
   replay_viewed: { level_id: string; source: ReplaySource };
   install_cta_selected: { surface: InstallSurface; result: InstallResult };
+  share_selected: {
+    level_id: string;
+    surface: ShareSurface;
+    method: ShareMethod;
+    outcome: ShareOutcome;
+  };
+  challenge_opened: { level_id: string; target_result: ChallengeResult };
+  challenge_completed: {
+    level_id: string;
+    move_count: number;
+    score: number;
+    outcome: ChallengeOutcome;
+  };
 }
 
 type AnalyticsPrimitive = string | number | boolean;
@@ -96,6 +117,11 @@ const INSTALL_RESULTS: readonly InstallResult[] = [
   "instructions",
   "unavailable",
 ];
+const SHARE_SURFACES: readonly ShareSurface[] = ["hero", "game", "completion", "lawsuit"];
+const SHARE_METHODS: readonly ShareMethod[] = ["web_share", "clipboard", "manual"];
+const SHARE_OUTCOMES: readonly ShareOutcome[] = ["shared", "copied", "canceled", "manual"];
+const CHALLENGE_RESULTS: readonly ChallengeResult[] = ["completed", "lawsuit"];
+const CHALLENGE_OUTCOMES: readonly ChallengeOutcome[] = ["beat", "tied", "missed", "lawsuit"];
 
 const IDENTIFIER: FieldRule = { type: "identifier" };
 const MOVE_NUMBER: FieldRule = { type: "number", max: 100_000 };
@@ -135,6 +161,22 @@ const EVENT_FIELDS: Record<AnalyticsEventName, Record<string, FieldRule>> = {
   install_cta_selected: {
     surface: { type: "enum", values: INSTALL_SURFACES },
     result: { type: "enum", values: INSTALL_RESULTS },
+  },
+  share_selected: {
+    level_id: IDENTIFIER,
+    surface: { type: "enum", values: SHARE_SURFACES },
+    method: { type: "enum", values: SHARE_METHODS },
+    outcome: { type: "enum", values: SHARE_OUTCOMES },
+  },
+  challenge_opened: {
+    level_id: IDENTIFIER,
+    target_result: { type: "enum", values: CHALLENGE_RESULTS },
+  },
+  challenge_completed: {
+    level_id: IDENTIFIER,
+    move_count: MOVE_NUMBER,
+    score: { type: "number", max: 100 },
+    outcome: { type: "enum", values: CHALLENGE_OUTCOMES },
   },
 };
 

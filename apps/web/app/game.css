@@ -925,3 +925,1314 @@
   .playable-piece--hr-flagged .playable-piece__mask-cell,
   .playable-lawsuit { animation: none; }
 }
+
+/* Gameplay cockpit v2: keep the puzzle, pieces, instructions, and sharing loop together. */
+.playable-showcase {
+  min-height: 100svh;
+  padding: clamp(34px, 4vw, 64px) clamp(14px, 3.6vw, 58px) clamp(54px, 6vw, 92px);
+  scroll-margin-top: 0;
+}
+
+.playable-heading {
+  gap: clamp(20px, 3.2vw, 54px);
+  margin-bottom: clamp(14px, 2vw, 26px);
+  max-width: 1480px;
+}
+
+.playable-heading h2 {
+  font-size: clamp(38px, 4.15vw, 62px);
+}
+
+.playable-heading > p {
+  font-size: clamp(14px, 1.15vw, 18px);
+  line-height: 1.5;
+}
+
+.playable-stage {
+  margin: 0 auto;
+  max-width: 1480px;
+  position: relative;
+  scroll-margin-top: 8px;
+  z-index: 2;
+}
+
+.playable-stage__toolbar {
+  align-items: center;
+  background: linear-gradient(90deg, rgba(16, 37, 54, 0.98), rgba(7, 18, 29, 0.98));
+  border: 1px solid rgba(173, 219, 246, 0.24);
+  border-bottom-color: rgba(255, 201, 40, 0.35);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 12px;
+  min-height: 52px;
+  padding: 7px 9px 7px 14px;
+}
+
+.playable-micro-guide {
+  align-items: center;
+  display: grid;
+  gap: clamp(8px, 2vw, 24px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.playable-micro-guide li {
+  align-items: center;
+  color: #dce7ed;
+  display: flex;
+  font-size: 10px;
+  font-weight: 900;
+  gap: 8px;
+  letter-spacing: 0.045em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.playable-micro-guide b {
+  align-items: center;
+  background: var(--game-amber);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(255, 201, 40, 0.24);
+  color: #07111b;
+  display: inline-flex;
+  flex: 0 0 24px;
+  font-family: "Arial Black", Impact, sans-serif;
+  height: 24px;
+  justify-content: center;
+}
+
+.playable-stage__actions {
+  display: flex;
+  gap: 7px;
+}
+
+.playable-help-button,
+.share-challenge-button {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #fff;
+  display: inline-flex;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 9px;
+  gap: 7px;
+  justify-content: center;
+  letter-spacing: 0.055em;
+  min-height: 40px;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.playable-help-button {
+  background: linear-gradient(180deg, #244c69, #10283b);
+}
+
+.playable-help-button b {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  display: inline-flex;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  height: 18px;
+  justify-content: center;
+  width: 18px;
+}
+
+.share-challenge-button {
+  background: linear-gradient(180deg, #ef5a43, #a71925);
+  border-color: rgba(255, 199, 181, 0.72);
+  box-shadow: 0 4px 0 #610912, 0 0 22px rgba(240, 68, 66, 0.15);
+}
+
+.share-challenge-button:hover,
+.share-challenge-button:focus-visible {
+  filter: brightness(1.12);
+}
+
+.share-challenge-button__icon {
+  fill: currentColor;
+  flex: 0 0 19px;
+  height: 19px;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.8;
+  width: 19px;
+}
+
+.share-challenge-button__icon path {
+  fill: none;
+}
+
+.share-challenge-button__feedback {
+  background: #efffdf;
+  border: 2px solid #4d9a2f;
+  color: #14330d;
+  font-size: 9px;
+  font-weight: 900;
+  left: 50%;
+  max-width: 240px;
+  padding: 7px 9px;
+  position: absolute;
+  text-align: center;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 80;
+}
+
+.share-challenge-button__feedback input {
+  background: #fff;
+  border: 1px solid #5e8d4a;
+  color: #10260a;
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 8px;
+  margin-top: 6px;
+  max-width: 100%;
+  padding: 6px;
+  width: 210px;
+}
+
+.share-challenge-button__wrap {
+  display: inline-flex;
+  position: relative;
+}
+
+.playable-layout {
+  align-items: start;
+  gap: clamp(12px, 1.7vw, 26px);
+  grid-template-columns: minmax(170px, 0.58fr) minmax(340px, 1.28fr) minmax(210px, 0.74fr);
+  max-width: none;
+}
+
+.playable-brief,
+.playable-tray {
+  padding: clamp(16px, 1.7vw, 25px);
+}
+
+.playable-tray {
+  grid-column: auto;
+}
+
+.playable-brief h3 {
+  font-size: clamp(24px, 2.35vw, 37px);
+}
+
+.playable-brief > p:not(.playable-brief__eyebrow) {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 16px 0;
+}
+
+.playable-brief dl {
+  margin: 18px 0;
+  padding: 11px 0;
+}
+
+.playable-brief__legend {
+  gap: 8px;
+}
+
+.playable-hr {
+  margin-top: 17px;
+  padding-top: 15px;
+}
+
+.playable-hr__rules {
+  gap: 5px;
+}
+
+.playable-elevator {
+  background:
+    linear-gradient(90deg, rgba(205, 226, 237, 0.16), transparent 7%, transparent 93%, rgba(205, 226, 237, 0.16)),
+    linear-gradient(180deg, #1b303e, #07111a 88%);
+  border: 10px solid #263943;
+  border-image: none;
+  border-radius: 24px 24px 8px 8px;
+  box-shadow:
+    inset 12px 0 18px rgba(189, 216, 229, 0.09),
+    inset -12px 0 18px rgba(189, 216, 229, 0.09),
+    inset 0 0 70px rgba(104, 190, 242, 0.1),
+    0 30px 80px rgba(0, 0, 0, 0.55);
+  isolation: isolate;
+  overflow: visible;
+  padding: 0 12px 12px;
+}
+
+.playable-elevator::after {
+  background:
+    linear-gradient(90deg, #111b20, #71828a 11%, #222f35 23%, #121c21 50%, #25333a 77%, #71828a 90%, #10191e);
+  border-radius: 0 0 6px 6px;
+  bottom: -16px;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.52);
+  content: "";
+  height: 13px;
+  left: -10px;
+  position: absolute;
+  right: -10px;
+  z-index: 10;
+}
+
+.playable-elevator--accepted {
+  animation: playable-accepted 520ms ease-out;
+}
+
+.playable-elevator--lawsuit {
+  border-color: #6e171b;
+  border-image: none;
+  box-shadow: inset 0 0 90px rgba(240, 68, 66, 0.2), 0 35px 95px rgba(142, 8, 13, 0.45);
+}
+
+.playable-elevator__header {
+  background:
+    linear-gradient(180deg, rgba(50, 67, 75, 0.96), rgba(8, 18, 28, 0.98) 42%),
+    #08121c;
+  border-bottom: 3px solid #53646c;
+  border-radius: 13px 13px 0 0;
+  gap: 9px;
+  grid-template-columns: auto auto 1fr auto;
+  margin: 0 -12px 10px;
+  min-height: 54px;
+  padding: 7px 11px;
+}
+
+.playable-elevator__floor {
+  align-items: center;
+  background: #020506;
+  border: 2px inset #566168;
+  color: #ffb020;
+  display: grid;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 950;
+  grid-template-columns: auto auto;
+  letter-spacing: 0.08em;
+  min-height: 31px;
+  padding: 3px 7px;
+  text-shadow: 0 0 9px rgba(255, 164, 32, 0.85);
+}
+
+.playable-elevator__floor i {
+  animation: playable-floor-arrow 1.2s ease-in-out infinite;
+  color: var(--game-green);
+  font-size: 9px;
+  font-style: normal;
+  margin-left: 4px;
+}
+
+.playable-elevator__badge {
+  padding: 7px 6px;
+}
+
+.playable-elevator__call-panel {
+  align-items: center;
+  background: linear-gradient(180deg, #7f8b91, #26343c 42%, #111a20);
+  border: 2px solid #9da8ad;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 8px 5px;
+  position: absolute;
+  right: -31px;
+  top: 43%;
+  width: 25px;
+  z-index: 15;
+}
+
+.playable-elevator__call-panel i,
+.playable-elevator__call-panel b {
+  border-radius: 50%;
+  display: block;
+  height: 9px;
+  width: 9px;
+}
+
+.playable-elevator__call-panel i {
+  background: #ff9f1e;
+  box-shadow: 0 0 10px rgba(255, 159, 30, 0.9);
+}
+
+.playable-elevator__call-panel b {
+  background: #10171c;
+  border: 1px solid #91a0a7;
+}
+
+.playable-board {
+  aspect-ratio: 5 / 6;
+  background: linear-gradient(180deg, #203d50 0%, #102b3e 64%, #081720 100%);
+  border: 2px solid rgba(189, 225, 245, 0.56);
+  box-shadow:
+    inset 0 0 45px rgba(96, 174, 219, 0.2),
+    inset 14px 0 24px rgba(0, 0, 0, 0.28),
+    inset -14px 0 24px rgba(0, 0, 0, 0.28),
+    0 0 0 5px rgba(3, 10, 16, 0.72);
+  margin-inline: auto;
+  max-width: 560px;
+  overflow: hidden;
+  width: min(100%, calc((100svh - 190px) * 0.8333));
+}
+
+.playable-board__cabin {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.playable-board__ceiling {
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(255, 245, 204, 0.9), rgba(255, 213, 96, 0.18) 30%, transparent 64%),
+    linear-gradient(180deg, #324b5a, #0d202d);
+  clip-path: polygon(0 0, 100% 0, 84% 15%, 16% 15%);
+  height: 25%;
+  inset: 0 0 auto;
+  position: absolute;
+}
+
+.playable-board__wall {
+  bottom: 18%;
+  position: absolute;
+  top: 9%;
+  width: 18%;
+}
+
+.playable-board__wall--left {
+  background: linear-gradient(90deg, #07131c, rgba(84, 137, 168, 0.58));
+  clip-path: polygon(0 0, 100% 8%, 100% 100%, 0 100%);
+  left: 0;
+}
+
+.playable-board__wall--right {
+  background: linear-gradient(270deg, #07131c, rgba(84, 137, 168, 0.58));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  right: 0;
+}
+
+.playable-board__floor-plane {
+  background:
+    repeating-linear-gradient(78deg, transparent 0 25px, rgba(164, 207, 229, 0.14) 26px 27px),
+    repeating-linear-gradient(102deg, transparent 0 25px, rgba(164, 207, 229, 0.12) 26px 27px),
+    linear-gradient(180deg, rgba(35, 72, 91, 0.2), #06131c 76%);
+  bottom: 0;
+  clip-path: polygon(17% 0, 83% 0, 100% 100%, 0 100%);
+  height: 28%;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.playable-board__door-seam {
+  background: linear-gradient(180deg, rgba(205, 234, 248, 0.45), rgba(205, 234, 248, 0.04));
+  bottom: 0;
+  box-shadow: 0 0 15px rgba(172, 219, 244, 0.2);
+  left: calc(50% - 1px);
+  position: absolute;
+  top: 11%;
+  width: 2px;
+}
+
+.playable-board__reflection {
+  animation: playable-glass-scan 5.2s ease-in-out infinite;
+  background: linear-gradient(104deg, transparent 0 42%, rgba(209, 237, 250, 0.12) 48%, transparent 55%);
+  inset: 0;
+  position: absolute;
+  transform: translateX(-48%);
+}
+
+.playable-board__cell {
+  box-shadow: inset -1px -1px 0 rgba(185, 224, 247, 0.19);
+  z-index: 2;
+}
+
+.playable-board__cell--target::after {
+  background: rgba(255, 201, 40, 0.035);
+  border: 2px solid rgba(255, 210, 67, 0.66);
+  box-shadow: inset 0 0 16px rgba(255, 201, 40, 0.1), 0 0 9px rgba(255, 201, 40, 0.1);
+  inset: 4px;
+}
+
+.playable-empty-guide {
+  background: rgba(2, 9, 15, 0.83);
+  border: 1px solid rgba(255, 211, 73, 0.72);
+  bottom: 10px;
+  color: #fff2c9;
+  display: grid;
+  gap: 2px;
+  left: 50%;
+  max-width: calc(100% - 24px);
+  padding: 7px 10px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 5;
+}
+
+.playable-empty-guide strong {
+  color: var(--game-amber);
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.09em;
+}
+
+.playable-empty-guide span {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.playable-message {
+  font-size: 11px;
+  margin-top: 9px;
+  min-height: 42px;
+  padding: 7px 10px;
+}
+
+.playable-tray__title {
+  margin-bottom: 11px;
+}
+
+.playable-tray__title span {
+  font-size: 9px;
+}
+
+.playable-tray__title strong {
+  font-size: clamp(16px, 1.55vw, 21px);
+  max-width: calc(100% - 54px);
+}
+
+.playable-tray__pieces {
+  gap: 8px;
+}
+
+.playable-tray-piece {
+  gap: 8px;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  min-height: 72px;
+  overflow: hidden;
+  padding: 6px 8px;
+  position: relative;
+}
+
+.playable-tray-piece--selected {
+  animation: playable-selected-piece 1.5s ease-in-out infinite;
+  background: rgba(255, 201, 40, 0.12);
+  border-color: #ffd75a;
+  box-shadow: inset 4px 0 0 var(--game-amber), 0 0 22px rgba(255, 201, 40, 0.12);
+}
+
+.playable-tray-piece__number {
+  align-items: center;
+  background: var(--game-amber);
+  border-radius: 50%;
+  color: #07111b;
+  display: flex;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 8px;
+  height: 18px;
+  justify-content: center;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  width: 18px;
+  z-index: 2;
+}
+
+.playable-tray-piece__art {
+  height: 54px;
+  width: 56px;
+}
+
+.playable-tray-piece__art svg {
+  max-height: 54px;
+}
+
+.playable-tray-piece__copy strong {
+  font-size: 10px;
+}
+
+.playable-tray-piece__copy small {
+  font-size: 8px;
+}
+
+.playable-tray-piece__cue {
+  color: var(--game-green);
+  display: block;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+.playable-controls {
+  margin-top: 10px;
+}
+
+.playable-controls button {
+  min-height: 48px;
+}
+
+.playable-complete {
+  bottom: 54px;
+  left: 5%;
+  padding: 16px;
+  right: 5%;
+}
+
+.playable-complete__actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1.45fr 0.8fr;
+  margin-top: 13px;
+  width: min(100%, 410px);
+}
+
+.playable-complete__actions .share-challenge-button,
+.playable-complete__actions > button {
+  min-height: 44px;
+  width: 100%;
+}
+
+.playable-complete__actions .share-challenge-button__wrap {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: 1fr auto;
+}
+
+.share-challenge-button__copy {
+  background: rgba(4, 13, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  color: #fff;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 8px;
+  min-height: 44px;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.share-challenge-button__copy:hover,
+.share-challenge-button__copy:focus-visible {
+  background: #172c3a;
+  border-color: var(--game-amber);
+}
+
+.playable-complete__actions > button {
+  background: linear-gradient(180deg, #3f6b28, #1d431a);
+  border: 1px solid #83d44c;
+  color: #fff;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 9px;
+}
+
+.playable-lawsuit__actions .share-challenge-button__wrap {
+  grid-column: 1 / -1;
+}
+
+.playable-lawsuit__actions .share-challenge-button {
+  width: 100%;
+}
+
+.playable-challenge-banner {
+  align-items: center;
+  background: linear-gradient(90deg, #6d101a, #b8222c 52%, #6d101a);
+  border: 1px solid #ff9c88;
+  color: #fff;
+  display: flex;
+  font-size: 10px;
+  font-weight: 850;
+  gap: 9px;
+  grid-column: 1 / -1;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  margin-bottom: 1px;
+  min-height: 36px;
+  padding: 7px 12px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.playable-challenge-banner b {
+  color: #ffe873;
+}
+
+.playable-challenge-banner--invalid {
+  background: linear-gradient(90deg, #27333b, #435361 52%, #27333b);
+  border-color: #9fb5c3;
+}
+
+.playable-complete__challenge {
+  align-items: center;
+  background: rgba(3, 14, 20, 0.84);
+  border: 1px solid currentColor;
+  color: var(--game-amber);
+  display: flex;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 11px;
+  gap: 9px;
+  justify-content: center;
+  margin: 10px auto 0;
+  max-width: 410px;
+  padding: 7px 10px;
+}
+
+.playable-complete__challenge small {
+  color: #fff;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 9px;
+}
+
+.playable-complete__challenge--beat { color: var(--game-green); }
+.playable-complete__challenge--missed { color: #ff7367; }
+
+.playable-tutorial {
+  background:
+    radial-gradient(circle at 50% 0, rgba(76, 164, 214, 0.23), transparent 38%),
+    linear-gradient(180deg, #10283a, #06111b 86%);
+  border: 2px solid rgba(183, 226, 248, 0.48);
+  box-shadow: 0 35px 120px rgba(0, 0, 0, 0.88), inset 0 0 48px rgba(88, 175, 225, 0.08);
+  color: #fff;
+  margin: auto;
+  max-height: min(92svh, 760px);
+  max-width: 860px;
+  overflow: auto;
+  padding: clamp(24px, 4vw, 42px);
+  width: min(calc(100% - 24px), 860px);
+}
+
+.playable-tutorial[open] {
+  animation: playable-tutorial-in 240ms cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
+}
+
+.playable-tutorial::backdrop {
+  background: rgba(1, 6, 10, 0.84);
+  backdrop-filter: blur(8px);
+}
+
+.playable-tutorial__close {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: flex;
+  font-size: 24px;
+  height: 42px;
+  justify-content: center;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 42px;
+}
+
+.playable-tutorial__heading {
+  max-width: 720px;
+  padding-right: 34px;
+}
+
+.playable-tutorial__heading > span {
+  color: var(--game-amber);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.playable-tutorial__heading h3 {
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: clamp(31px, 5vw, 54px);
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  margin: 10px 0 12px;
+  text-transform: uppercase;
+}
+
+.playable-tutorial__heading p {
+  color: #b5c6d0;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.playable-tutorial__steps {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 25px 0 18px;
+  padding: 0;
+}
+
+.playable-tutorial__steps li {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(182, 223, 245, 0.2);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto 1fr;
+  min-height: 168px;
+  padding: 14px;
+  position: relative;
+}
+
+.playable-tutorial__steps li > b {
+  align-items: center;
+  background: var(--game-amber);
+  border-radius: 50%;
+  color: #07111b;
+  display: flex;
+  font-family: "Arial Black", Impact, sans-serif;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.playable-tutorial__steps strong {
+  display: block;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 14px;
+  line-height: 1.05;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.playable-tutorial__steps p {
+  color: #aebec8;
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 8px 0 0;
+}
+
+.playable-tutorial__steps li > span {
+  bottom: 8px;
+  color: rgba(255, 201, 40, 0.38);
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: clamp(25px, 4vw, 42px);
+  position: absolute;
+  right: 9px;
+}
+
+.playable-tutorial__tip {
+  background: rgba(119, 222, 61, 0.08);
+  border-left: 4px solid var(--game-green);
+  color: #d9e8d0;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.playable-tutorial__start {
+  background: linear-gradient(180deg, #8ce64a, #3c9d26);
+  border: 2px solid #c8ff9f;
+  box-shadow: 0 6px 0 #1a5b18, 0 0 30px rgba(119, 222, 61, 0.2);
+  color: #061107;
+  display: flex;
+  font-family: "Arial Black", Impact, sans-serif;
+  font-size: 14px;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 18px;
+  min-height: 52px;
+  padding: 10px 18px;
+  width: 100%;
+}
+
+@keyframes playable-accepted {
+  0% { box-shadow: inset 0 0 70px rgba(104, 190, 242, 0.1), 0 30px 80px rgba(0, 0, 0, 0.55); }
+  42% { box-shadow: inset 0 0 80px rgba(119, 222, 61, 0.32), 0 0 42px rgba(119, 222, 61, 0.35); }
+  100% { box-shadow: inset 0 0 70px rgba(104, 190, 242, 0.1), 0 30px 80px rgba(0, 0, 0, 0.55); }
+}
+
+@keyframes playable-floor-arrow {
+  0%, 100% { opacity: 0.45; transform: translateY(1px); }
+  50% { opacity: 1; transform: translateY(-1px); }
+}
+
+@keyframes playable-glass-scan {
+  0%, 22% { transform: translateX(-55%); }
+  68%, 100% { transform: translateX(58%); }
+}
+
+@keyframes playable-selected-piece {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes playable-tutorial-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (min-width: 821px) and (max-height: 820px) {
+  .playable-showcase {
+    padding-block: 24px 40px;
+  }
+
+  .playable-heading {
+    margin-bottom: 12px;
+  }
+
+  .playable-heading h2 {
+    font-size: clamp(34px, 3.7vw, 48px);
+  }
+
+  .playable-heading > p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .playable-stage__toolbar {
+    min-height: 44px;
+  }
+
+  .playable-board {
+    max-width: 500px;
+    width: min(100%, calc((100svh - 170px) * 0.8333));
+  }
+
+  .playable-brief,
+  .playable-tray {
+    padding: 14px;
+  }
+
+  .playable-brief > p:not(.playable-brief__eyebrow),
+  .playable-brief__legend {
+    display: none;
+  }
+
+  .playable-brief dl {
+    margin: 12px 0;
+  }
+
+  .playable-hr {
+    margin-top: 11px;
+    padding-top: 11px;
+  }
+
+  .playable-tray-piece {
+    min-height: 62px;
+  }
+
+  .playable-tray-piece__art,
+  .playable-tray-piece__art svg {
+    height: 46px;
+    max-height: 46px;
+  }
+
+  .playable-tray-piece__copy small {
+    display: none;
+  }
+
+  .playable-controls button {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1180px) {
+  .playable-tray__pieces {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .playable-showcase {
+    padding: 18px 8px 52px;
+  }
+
+  .playable-heading {
+    display: block;
+    margin: 0 5px 12px;
+  }
+
+  .playable-kicker {
+    font-size: 8px;
+    margin-bottom: 8px;
+  }
+
+  .playable-heading h2 {
+    font-size: clamp(34px, 12.5vw, 48px);
+    max-width: 520px;
+  }
+
+  .playable-heading > p {
+    display: none;
+  }
+
+  .playable-stage__toolbar {
+    gap: 7px;
+    grid-template-columns: 1fr;
+    margin-bottom: 7px;
+    padding: 7px;
+  }
+
+  .playable-micro-guide {
+    gap: 4px;
+  }
+
+  .playable-micro-guide li {
+    font-size: 8px;
+    gap: 4px;
+    letter-spacing: 0;
+  }
+
+  .playable-micro-guide b {
+    flex-basis: 19px;
+    font-size: 7px;
+    height: 19px;
+  }
+
+  .playable-stage__actions {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+  }
+
+  .playable-help-button,
+  .share-challenge-button {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .share-challenge-button__wrap {
+    width: 100%;
+  }
+
+  .playable-layout {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: 1fr;
+  }
+
+  .playable-tray {
+    grid-column: auto;
+    order: 1;
+    padding: 9px;
+  }
+
+  .playable-elevator {
+    border-width: 6px;
+    order: 2;
+    padding: 0 7px 8px;
+  }
+
+  .playable-brief {
+    order: 3;
+  }
+
+  .playable-tray__title {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 7px;
+  }
+
+  .playable-tray__title span {
+    display: none;
+  }
+
+  .playable-tray__title strong {
+    font-size: 13px;
+    max-width: calc(100% - 46px);
+  }
+
+  .playable-sound {
+    min-height: 34px;
+    position: static;
+  }
+
+  .playable-tray__pieces {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .playable-tray-piece {
+    align-content: start;
+    gap: 3px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    min-height: 92px;
+    padding: 5px 3px;
+    text-align: center;
+  }
+
+  .playable-tray-piece__art {
+    height: 48px;
+    width: 100%;
+  }
+
+  .playable-tray-piece__art svg {
+    max-height: 48px;
+  }
+
+  .playable-tray-piece__copy {
+    display: block;
+  }
+
+  .playable-tray-piece__copy strong {
+    display: block;
+    font-size: 9px;
+  }
+
+  .playable-tray-piece__copy small,
+  .playable-tray-piece > b {
+    display: none;
+  }
+
+  .playable-tray-piece__cue {
+    font-size: 7px;
+  }
+
+  .playable-controls {
+    bottom: auto;
+    margin-top: 7px;
+    position: static;
+  }
+
+  .playable-controls button {
+    min-height: 44px;
+  }
+
+  .playable-board {
+    max-width: 430px;
+    width: min(100%, calc((100svh - 245px) * 0.8333));
+  }
+
+  .playable-elevator__header {
+    border-radius: 8px 8px 0 0;
+    grid-template-columns: auto auto 1fr auto;
+    margin: 0 -7px 7px;
+    min-height: 47px;
+    padding: 6px 7px;
+  }
+
+  .playable-elevator__floor {
+    font-size: 9px;
+    min-height: 27px;
+    padding: 2px 4px;
+  }
+
+  .playable-elevator__header strong,
+  .playable-elevator__header b {
+    font-size: 9px;
+  }
+
+  .playable-elevator__header div span {
+    font-size: 8px;
+  }
+
+  .playable-elevator__call-panel {
+    display: none;
+  }
+
+  .playable-message {
+    font-size: 10px;
+    line-height: 1.3;
+    min-height: 38px;
+  }
+
+  .playable-empty-guide {
+    bottom: 6px;
+    padding: 5px 7px;
+  }
+
+  .playable-empty-guide strong {
+    font-size: 8px;
+  }
+
+  .playable-empty-guide span {
+    font-size: 7px;
+  }
+
+  .playable-tutorial {
+    padding: 24px 15px 18px;
+  }
+
+  .playable-tutorial__heading h3 {
+    font-size: clamp(30px, 11vw, 42px);
+  }
+
+  .playable-tutorial__steps {
+    grid-template-columns: 1fr;
+    margin-block: 17px 12px;
+  }
+
+  .playable-tutorial__steps li {
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .playable-tutorial__steps li > span {
+    display: none;
+  }
+
+  .playable-complete {
+    bottom: 45px;
+    padding: 12px;
+  }
+
+  .playable-complete__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .playable-complete__actions .share-challenge-button__wrap {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .playable-heading h2 {
+    font-size: clamp(31px, 11.8vw, 43px);
+  }
+
+  .playable-board {
+    width: 100%;
+  }
+
+  .playable-tray-piece {
+    min-height: 86px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .playable-showcase {
+    min-height: 0;
+    padding: 5px 8px 28px;
+  }
+
+  .playable-heading,
+  .playable-brief,
+  .playable-access-note {
+    display: none;
+  }
+
+  .playable-stage__toolbar {
+    gap: 8px;
+    margin-bottom: 6px;
+    min-height: 40px;
+    padding: 4px 6px 4px 9px;
+  }
+
+  .playable-micro-guide {
+    gap: 6px;
+  }
+
+  .playable-micro-guide li {
+    font-size: 8px;
+    gap: 5px;
+  }
+
+  .playable-micro-guide b {
+    flex-basis: 20px;
+    height: 20px;
+  }
+
+  .playable-help-button,
+  .share-challenge-button {
+    font-size: 8px;
+    min-height: 36px;
+    padding: 6px 9px;
+  }
+
+  .playable-layout {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(245px, 0.82fr) minmax(320px, 1.18fr);
+  }
+
+  .playable-elevator {
+    border-width: 6px;
+    grid-column: 1;
+    order: initial;
+    padding: 0 6px 5px;
+  }
+
+  .playable-elevator__header {
+    margin: 0 -6px 5px;
+    min-height: 35px;
+    padding: 4px 6px;
+  }
+
+  .playable-elevator__call-panel {
+    display: none;
+  }
+
+  .playable-board {
+    max-width: 260px;
+    min-width: 240px;
+    width: min(100%, 260px);
+  }
+
+  .playable-message {
+    font-size: 9px;
+    margin-top: 5px;
+    min-height: 28px;
+    padding: 5px 7px;
+  }
+
+  .playable-tray {
+    grid-column: 2;
+    order: initial;
+    padding: 8px;
+  }
+
+  .playable-tray__title {
+    margin-bottom: 6px;
+  }
+
+  .playable-tray__title strong {
+    font-size: 13px;
+  }
+
+  .playable-tray__pieces {
+    gap: 5px;
+    grid-template-columns: 1fr;
+  }
+
+  .playable-tray-piece {
+    gap: 6px;
+    grid-template-columns: 45px minmax(0, 1fr) auto;
+    min-height: 54px;
+    padding: 4px 7px;
+    text-align: left;
+  }
+
+  .playable-tray-piece__art,
+  .playable-tray-piece__art svg {
+    height: 42px;
+    max-height: 42px;
+    width: 45px;
+  }
+
+  .playable-tray-piece__copy small {
+    display: none;
+  }
+
+  .playable-controls {
+    margin-top: 6px;
+  }
+
+  .playable-controls button {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playable-board__reflection,
+  .playable-elevator__floor i,
+  .playable-elevator--accepted,
+  .playable-tray-piece--selected,
+  .playable-tutorial[open] {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .playable-board__cell--target::after,
+  .playable-tray-piece--selected,
+  .playable-help-button,
+  .share-challenge-button {
+    border: 2px solid ButtonText;
+  }
+}
