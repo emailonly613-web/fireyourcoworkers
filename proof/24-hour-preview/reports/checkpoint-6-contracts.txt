@@ -1,0 +1,34 @@
+FIRE YOUR COWORKERS - CHECKPOINT 6 AUTOMATED CONTRACTS
+Run: 2026-07-29 11:56 America/New_York
+
+RESULT
+TYPECHECK = PASS
+TEST_FILES = 5 PASS / 0 FAIL
+TESTS = 42 PASS / 0 FAIL
+
+ENFORCED CONTRACTS
+- Manifest install icons exist, carry genuine PNG signatures, and match their declared dimensions.
+- Manifest wide and narrow install screenshots carry genuine PNG signatures and match declared dimensions.
+- Service worker parses as JavaScript.
+- Service worker removes only stale namespaced caches, claims clients, and honors SKIP_WAITING.
+- Offline navigation returns the cached root shell when available and a branded 503 fallback otherwise.
+- All nine approved anonymous analytics events emit through the local adapter and dataLayer without fetch.
+- Analytics rejects undeclared personal-data fields, invalid identifiers, and invalid numeric values.
+- Root Open Graph metadata points to a genuine 1200x630 PNG asset.
+- Prohibited historical public naming is absent from app, components, game, and public files.
+- Required homepage, full-page, placement, squish, lawsuit, and completion screenshots exist with truthful dimensions.
+
+REQUIRED ANALYTICS EVENTS
+page_view
+play_started
+first_piece_grabbed
+valid_drop
+invalid_drop
+level_completed
+lawsuit_triggered
+replay_viewed
+install_cta_selected
+
+NOTES
+- The contracts detected JPEG data behind PNG filenames for the Open Graph asset and narrow PWA screenshot during preparation. Both assets were replaced with genuine PNG data before the passing run.
+- The local Node runtime reported 24.15.0 while the repository requests 24.18.0 or newer within Node 24. This is an environment warning; typecheck and tests passed.

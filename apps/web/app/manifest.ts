@@ -1,0 +1,62 @@
+import type { MetadataRoute } from "next";
+
+export const PWA_ASSET_GAPS = [] as const;
+
+export const PWA_MANIFEST: MetadataRoute.Manifest = {
+  id: "/",
+  name: "Fire Your Coworkers",
+  short_name: "Fire Coworkers",
+  description:
+    "A cinematic office-packing comedy game. Fit the team in the elevator before HR files the paperwork.",
+  start_url: "/",
+  scope: "/",
+  display: "standalone",
+  display_override: ["window-controls-overlay", "standalone"],
+  orientation: "any",
+  background_color: "#07111d",
+  theme_color: "#07111d",
+  lang: "en",
+  dir: "ltr",
+  categories: ["games", "entertainment"],
+  prefer_related_applications: false,
+  icons: [
+    {
+      src: "/icons/app-icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: "/icons/app-icon-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: "/icons/app-icon-maskable-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "maskable",
+    },
+  ],
+  screenshots: [
+    {
+      src: "/art/elevator-atrium-v1.png",
+      sizes: "1672x941",
+      type: "image/png",
+      form_factor: "wide",
+      label: "The Fire Your Coworkers elevator atrium",
+    },
+    {
+      src: "/screenshots/gameplay-mobile-390x844.png",
+      sizes: "390x844",
+      type: "image/png",
+      form_factor: "narrow",
+      label: "The Mandatory Elevator Meeting starter floor on mobile",
+    },
+  ],
+};
+
+export default function manifest(): MetadataRoute.Manifest {
+  return PWA_MANIFEST;
+}

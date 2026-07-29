@@ -1,3 +1,13 @@
 node_modules/
 web/proof/
 package-lock.json
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+proof/24-hour-preview/screenshots/.desktop-stitch*/
+proof/24-hour-preview/screenshots/.mobile-stitch/
+proof/24-hour-preview/screenshots/.tablet-no-clip.jpg
+proof/24-hour-preview/screenshots/.mobile-top-no-clip.jpg

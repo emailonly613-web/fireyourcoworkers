@@ -1,0 +1,11 @@
+CHECKPOINT 6 TEST EVIDENCE
+2026-07-29 11:56 America/New_York
+
+corepack pnpm --filter @fyc/web typecheck
+PASS - TypeScript completed with zero errors.
+
+corepack pnpm --filter @fyc/web test
+PASS - 5 test files passed.
+PASS - 42 tests passed, 0 failed.
+
+The current machine uses Node 24.15.0 and reports an engine warning because the repository requests Node >=24.18.0 <25. The warning did not suppress or alter either passing command.
