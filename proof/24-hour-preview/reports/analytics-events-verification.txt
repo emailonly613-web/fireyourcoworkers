@@ -1,0 +1,33 @@
+FIRE YOUR COWORKERS - PUBLIC PREVIEW ANALYTICS EVENT VERIFICATION
+VERIFIED_AT=2026-07-29T12:12:57-04:00
+
+RESULT=PASS
+RUNTIME=PUBLIC_PREVIEW_CHROMIUM
+EVENT_SCHEMA_VERSION=1
+UNIQUE_APPROVED_EVENTS_OBSERVED=9/9
+TOTAL_EVENTS_OBSERVED=18
+
+OBSERVED_EVENTS:
+- page_view
+- play_started
+- first_piece_grabbed
+- valid_drop
+- invalid_drop
+- level_completed
+- lawsuit_triggered
+- replay_viewed
+- install_cta_selected
+
+LIVE_INTERACTIONS=Homepage load; Play Now; replay section visibility; install
+guidance selection; first piece grab; three-piece valid completion; repeated
+out-of-bounds employee drops; and the 100% lawsuit transition.
+
+ADAPTER_RESULT=Events appeared in both the document analytics ledger and an injected
+dataLayer with fyc_schema_version=1. The checkpoint-6 contract report separately
+records 42 passing tests for the approved event allowlist, payload sanitation, and
+no-fetch local adapter behavior.
+
+EXTERNAL_ANALYTICS_DELIVERY=NOT_CONFIGURED
+BOUNDARY=This verifies anonymous client event creation and dataLayer publication.
+It does not claim an external analytics vendor, collection endpoint, retention
+pipeline, dashboard, consent platform, or production conversion reporting.

@@ -1,22 +1,36 @@
 # Fire Your Coworkers — Eight-Creative Social Package
 
 Status date: 2026-07-29  
-Package status: **PARTIAL — 3 of 8 concepts have truthful source states available**
+Package status: **PASS — 8 of 8 concepts generated from truthful real-build sources**
 
-This package follows the 24-hour override exactly: eight named 9:16 concepts, made only from the real current build. A still-based proof clip is labeled as such and is not presented as an interaction recording. Missing gameplay moments are blocked until the exact browser state is captured.
+This package follows the 24-hour override exactly: eight named 9:16 concepts, made only from the real current build. Still-based proof clips are labeled as stills and are not presented as interaction recordings. Concepts 04, 05, and 07 preserve genuine browser-recorded motion.
 
 ## Generated output proof
 
-All six generated files were probed after export: 1080×1920, 30 fps, six seconds, `yuv420p`, and no audio. Midpoint-frame visual QA confirms the headline, source action, support line, and CTA remain inside the portrait canvas.
+All sixteen generated files were probed after export: 1080×1920, 30 fps, six seconds, `yuv420p`, and no audio. Midpoint-frame visual QA covered all eight creatives; sequence-frame QA separately confirmed the real 99→100 lawsuit change, final-piece completion, and moving paper burst. The source state, output byte sizes, SHA-256 hashes, and both gameplay-recording probes are recorded in `GENERATION-REPORT.md`.
 
-| Output | Codec | Bytes | SHA-256 |
-| --- | --- | ---: | --- |
-| `02-ceo-pinned-against-glass.mp4` | H.264 | 941,315 | `FCA68495C3F58C097EF74F1D34A3CD3BB53AF2CD0A256D180B9079BB46C34257` |
-| `02-ceo-pinned-against-glass.webm` | VP9 | 592,472 | `C8566059C6ECC94C65037AAF31A0406D5665D44390BF3A154C265E71F4D04D87` |
-| `06-obvious-mistake-left-unfixed.mp4` | H.264 | 877,337 | `622CF268A38C4AF8F3F0EC7F439FC3F5A9E65AB0156302C8DE902E15D1C6B8B4` |
-| `06-obvious-mistake-left-unfixed.webm` | VP9 | 492,026 | `CA89F5BAFA45CAB52E1CDA6922DF3E61930449DEE005DE655D0C609E2DFCA4AF` |
-| `08-technically-legal-completion.mp4` | H.264 | 1,051,581 | `E09A5DEB51EAC1ADD4CBE129EA51ED7EC3216AA15D0ADA44DF404A819FFF687D` |
-| `08-technically-legal-completion.webm` | VP9 | 708,229 | `3728C904AF0F748650A2199C42E1EE0D61CEAB0DEDA269DAEA6C586AF4C42FBC` |
+`Generate-SocialClips.ps1` now verifies every existing or newly generated output and writes two derived handoff files:
+
+- `GENERATION-REPORT.md`: source and output status, byte sizes, SHA-256 hashes, media contract results, plus desktop/mobile gameplay recording probes.
+- `PUBLISH-COPY.md`: the approved hook, caption, CTA, and destination for all eight concepts.
+
+Keep placeholders with:
+
+```powershell
+.\Generate-SocialClips.ps1 -Creative all
+```
+
+Substitute an approved preview URL and channel without editing creative copy:
+
+```powershell
+.\Generate-SocialClips.ps1 -Creative all -Force `
+  -PublicBaseUrl "https://approved-preview.example" `
+  -Channel "instagram"
+```
+
+The generator refuses malformed base URLs. It never publishes or creates SEO routes.
+
+The authoritative, current output inventory is generated rather than duplicated here: `GENERATION-REPORT.md`. This prevents stale hashes after an intentional re-render.
 
 ## Shared export contract
 
@@ -29,19 +43,19 @@ All six generated files were probed after export: 1080×1920, 30 fps, six second
 - Safe areas: headline stays below the top 100 pixels; CTA stays above the bottom 140 pixels.
 - Rights: all underlying visuals are screenshots or recordings of the Fire Your Coworkers build and its project-owned art. No stock footage, external artwork, logos, user content, or unlicensed music are used. Exports are silent. Overlay text uses an installed operating-system font and does not bundle a third-party font file.
 - Truth: no invented views, likes, comments, player counts, scores, reviews, quotes, or performance claims.
-- Destination placeholder format: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content={{CREATIVE_SLUG}}#play`
+- Approved preview destination format: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content={{CREATIVE_SLUG}}#play`
 
 ## Creative inventory
 
 ### 01 — Printer Leaves One Tile
 
-- Status: **BLOCKED — exact state capture missing**
+- Status: **GENERATED FROM A REAL STILL**
 - Hook: **THE PRINTER LEFT ONE TILE.**
 - Post caption: One square. Three workplace hazards. The copier has already printed the incident report.
 - CTA: **Beat This Office**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=01-printer-leaves-one-tile#play`
-- Required source state: a real-build 9:16 recording or screenshot showing the Broken Copy Machine placed so exactly one required tile remains and the next fit is visibly in jeopardy.
-- Expected input: `source-states/01-printer-leaves-one-tile.png`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=01-printer-leaves-one-tile#play`
+- Source state: `source-states/01-printer-leaves-one-tile.png`, real build with the printer placed over the highlighted load and a single required tile visibly left open.
+- Truth note: stylized motion is applied to a still image; this is not represented as a live placement recording.
 - Rights/music: project-owned build capture only; silent; no external artwork or music.
 - Export: 1080×1920, 30 fps, 6 seconds, MP4 and WebM.
 
@@ -51,7 +65,7 @@ All six generated files were probed after export: 1080×1920, 30 fps, six second
 - Hook: **THE CEO WANTED VISIBILITY.**
 - Post caption: We gave him the entire glass wall. HR called it unscheduled executive contact.
 - CTA: **Beat This Office**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=02-ceo-pinned-against-glass#play`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=02-ceo-pinned-against-glass#play`
 - Source state: `screenshots/squish.png`, real build with the CEO rotated and compressed against the upper elevator grid.
 - Truth note: stylized motion is applied to a still image; this is not represented as a live drag recording.
 - Rights/music: project-owned build capture only; silent; no external artwork or music.
@@ -59,37 +73,37 @@ All six generated files were probed after export: 1080×1920, 30 fps, six second
 
 ### 03 — Intern Rotated Wrong
 
-- Status: **BLOCKED — exact state capture missing**
+- Status: **GENERATED FROM A REAL STILL**
 - Hook: **ORIENTATION WAS NOT OPTIONAL.**
 - Post caption: The intern found a new sleeping position. HR found a new section of the handbook.
 - CTA: **Fix This Office**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=03-intern-rotated-wrong#play`
-- Required source state: a real-build capture with the Sleeping Intern visibly rotated into an invalid red preview, before the drop resets.
-- Expected input: `source-states/03-intern-rotated-wrong.png`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=03-intern-rotated-wrong#play`
+- Source state: `source-states/03-intern-rotated-wrong.png`, real build with the Sleeping Intern selected at 90 degrees and the corresponding vertical red invalid preview visible.
+- Truth note: stylized motion is applied to a still image; this is not represented as a live drop recording.
 - Rights/music: project-owned build capture only; silent; no external artwork or music.
 - Export: 1080×1920, 30 fps, 6 seconds, MP4 and WebM.
 
 ### 04 — HR Goes From 99 to Lawsuit
 
-- Status: **BLOCKED — transition recording missing**
+- Status: **GENERATED FROM A REAL RECORDING**
 - Hook: **HR WAS FINE AT 99%.**
-- Post caption: One more placement. Four violations. Legal has entered the elevator.
+- Post caption: One more incident. Four violations. Legal has entered the elevator.
 - CTA: **Beat My HR Score**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=04-hr-99-to-lawsuit#play`
-- Required source state: a real-build recording beginning with the visible HR meter at exactly 99%, followed by the triggering placement and the lawsuit overlay. `screenshots/lawsuit.png` proves only the 100% end state and is not sufficient by itself.
-- Expected input: `source-states/04-hr-99-to-lawsuit.webm`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=04-hr-99-to-lawsuit#play`
+- Source state: `source-states/04-hr-99-to-lawsuit.webm`, continuous real-build recording showing exactly 99%, the next invalid incident, 100%, and the lawsuit state.
+- Truth note: the score change and lawsuit transition come from the real HR engine; no meter frame or UI state was fabricated.
 - Rights/music: project-owned build recording only; silent; no external artwork or music.
 - Export: 1080×1920, 30 fps, 6 seconds, MP4 and WebM.
 
 ### 05 — Perfect Last-Second Fit
 
-- Status: **BLOCKED — final-placement recording missing**
+- Status: **GENERATED FROM A REAL RECORDING**
 - Hook: **THE LAST PIECE HAD ONE LEGAL HOME.**
-- Post caption: No room. No undo. One final drop between the office and a lawsuit.
+- Post caption: One legal home. One final drop. The elevator called it Technically Legal.
 - CTA: **Beat This Office**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=05-perfect-last-second-fit#play`
-- Required source state: a real-build recording of the final piece entering its only valid position and immediately revealing the completion result. `screenshots/completion.png` proves the result but not the last-second placement.
-- Expected input: `source-states/05-perfect-last-second-fit.webm`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=05-perfect-last-second-fit#play`
+- Source state: `source-states/05-perfect-last-second-fit.webm`, continuous real-build recording of the last remaining piece entering the final load zone and revealing Technically Legal completion.
+- Truth note: the creative uses the genuine final-placement transition; no timer is added or claimed.
 - Rights/music: project-owned build recording only; silent; no external artwork or music.
 - Export: 1080×1920, 30 fps, 6 seconds, MP4 and WebM.
 
@@ -99,7 +113,7 @@ All six generated files were probed after export: 1080×1920, 30 fps, six second
 - Hook: **EVERYONE SAW THE RED SQUARES.**
 - Post caption: Nobody moved the piece. Classic management.
 - CTA: **Fix This Office**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=06-obvious-mistake-left-unfixed#play`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=06-obvious-mistake-left-unfixed#play`
 - Source state: `screenshots/invalid-placement.png`, real build with a clearly visible red invalid-placement preview.
 - Truth note: stylized motion is applied to a still image; this is not represented as a live drag recording.
 - Rights/music: project-owned build capture only; silent; no external artwork or music.
@@ -107,13 +121,13 @@ All six generated files were probed after export: 1080×1920, 30 fps, six second
 
 ### 07 — Printer Paper Explosion
 
-- Status: **BLOCKED — exact effect recording missing**
+- Status: **GENERATED FROM A REAL RECORDING**
 - Hook: **THE PRINTER CHOSE VIOLENCE.**
 - Post caption: Paper jam became paper weather. Facilities has left the group chat.
 - CTA: **Beat This Office**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=07-printer-paper-explosion#play`
-- Required source state: a real-build recording of the Broken Copy Machine triggering its paper burst with multiple moving sheets visible. Static printer art is not enough to claim an explosion.
-- Expected input: `source-states/07-printer-paper-explosion.webm`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=07-printer-paper-explosion#play`
+- Source state: `source-states/07-printer-paper-explosion.webm`, real-build living-hero recording with the Broken Copy Machine visible while multiple project-owned paper sheets animate through the scene.
+- Truth note: “explosion” is the creative hook for the real animated paper burst; the video does not add artificial paper or fake gameplay UI.
 - Rights/music: project-owned build recording only; silent; no external artwork or music.
 - Export: 1080×1920, 30 fps, 6 seconds, MP4 and WebM.
 
@@ -123,24 +137,18 @@ All six generated files were probed after export: 1080×1920, 30 fps, six second
 - Hook: **TECHNICALLY LEGAL IS STILL LEGAL.**
 - Post caption: The elevator is full. HR will follow up after the doors close.
 - CTA: **Beat My HR Score**
-- Destination URL: `{{PUBLIC_BASE_URL}}/?utm_source={{CHANNEL}}&utm_medium=organic_social&utm_campaign=public_preview&utm_content=08-technically-legal-completion#play`
+- Destination URL: `https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/?utm_source=organic&utm_medium=organic_social&utm_campaign=public_preview&utm_content=08-technically-legal-completion#play`
 - Source state: `screenshots/completion.png`, real build showing all three pieces loaded and the Technically Legal completion result.
 - Truth note: stylized motion is applied to a still image; this is not represented as a live placement recording.
 - Rights/music: project-owned build capture only; silent; no external artwork or music.
 - Export: 1080×1920, 30 fps, 6 seconds, MP4 and WebM.
 
-## Missing capture queue
+## Supporting gameplay recordings
 
-Capture these five exact browser states before declaring the eight-creative package complete:
-
-1. Broken Copy Machine placement leaving exactly one required tile.
-2. Sleeping Intern visibly rotated in a red invalid preview.
-3. Continuous 99% HR meter → triggering placement → lawsuit recording.
-4. Continuous final-piece drop → Technically Legal completion recording.
-5. Continuous printer paper-burst effect recording.
-
-Place approved inputs in `source-states/` with the filenames above, then rerun `Generate-SocialClips.ps1 -Creative all -Force`.
+- `../desktop-gameplay.webm`: six-second real desktop browser recording, 1425×891, final placement through completion.
+- `../mobile-gameplay.webm`: six-second real mobile browser recording, 375×811, final placement through completion.
+- Both recordings are silent VP9 `yuv420p`; exact hashes are in `GENERATION-REPORT.md`.
 
 ## SEO boundary
 
-This package does not create indexable replay pages, challenge routes, or new metadata. Social destinations remain explicit placeholders until the public base URL and canonical play destination are approved. Replay/video SEO remains in its separate checkpoint and must not be inferred from the existence of these local proof clips.
+This package does not create indexable replay pages, challenge routes, or new metadata. The DigitalOcean preview URL is a social-testing destination, not a declaration that it is the final canonical search URL. Replay/video SEO remains in its separate checkpoint and must not be inferred from the existence of these local proof clips.

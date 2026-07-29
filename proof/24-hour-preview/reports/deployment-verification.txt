@@ -1,0 +1,32 @@
+FIRE YOUR COWORKERS - PUBLIC PREVIEW DEPLOYMENT VERIFICATION
+VERIFIED_AT=2026-07-29T12:20:10-04:00
+
+RESULT=PASS
+PUBLIC_PREVIEW=LIVE
+PRODUCTION_CUTOVER=NOT_DONE
+
+URL=https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/
+ROOT_HTTP_STATUS=200
+ROOT_CONTENT_TYPE=text/html; charset=utf-8
+ROOT_TITLE=Fire Your Coworkers — Pack the office. Survive HR.
+ROOT_H1=FIRE YOUR COWORKERS
+
+APP_ID=aeb54a47-abb1-419d-88f9-a64dc9546e50
+APP_PHASE=ACTIVE
+DEPLOYMENT_ID=d5f5c146-3c46-4d9d-8046-a4268aa35d0c
+DEPLOYMENT_PHASE=ACTIVE
+DEPLOYED_COMMIT=8d62473f2773cc70981bfe866e81f3d6938d21d3
+LOCAL_HEAD=8d62473f2773cc70981bfe866e81f3d6938d21d3
+COMMIT_MATCH=YES
+SOURCE_BRANCH=codex/24-hour-preview
+SOURCE_DIRECTORY=public-preview
+
+PUBLIC_SCREENSHOTS_PRESENT=YES
+DESKTOP_SCREENSHOT=screenshots/public-preview-desktop.png
+MOBILE_SCREENSHOT=screenshots/public-preview-mobile.png
+EXPLICIT_FAVICON_LINKS=YES
+LIVE_99_TO_100_LAWSUIT=PASS
+FRESH_DESKTOP_CONSOLE_ERRORS=0
+
+NOTE=This PASS covers the isolated public preview only. The production app and
+custom-domain replacement cutover remain outside this verified deployment.

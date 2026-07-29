@@ -1,0 +1,48 @@
+FIRE YOUR COWORKERS - PUBLIC PREVIEW PWA RUNTIME VERIFICATION
+VERIFIED_AT=2026-07-29T12:13:23-04:00
+
+RESULT=PASS
+URL=https://fireyourcoworkers-codex-preview-hxnxm.ondigitalocean.app/
+SECURE_CONTEXT=YES
+
+MANIFEST_HTTP_STATUS=200
+MANIFEST_CONTENT_TYPE=application/json
+MANIFEST_NAME=Fire Your Coworkers
+MANIFEST_START_URL=/
+MANIFEST_SCOPE=/
+MANIFEST_DISPLAY=standalone
+MANIFEST_ICONS=3
+MANIFEST_SCREENSHOTS=2
+ICON_192_HTTP_STATUS=200
+ICON_512_HTTP_STATUS=200
+ICON_MASKABLE_512_HTTP_STATUS=200
+
+SERVICE_WORKER_HTTP_STATUS=200
+SERVICE_WORKER_SCRIPT=/sw.js
+SERVICE_WORKER_SCOPE=/
+SERVICE_WORKER_STATE=activated
+PAGE_CONTROLLED=YES
+RUNTIME_STATUS=controlled
+CACHE_NAME=fire-your-coworkers-shell-v1
+CACHED_ROOT_SHELL=YES
+CACHED_MANIFEST=YES
+CACHED_BUILD_ASSETS=YES
+
+OFFLINE_RELOAD_HTTP_STATUS=200
+OFFLINE_RESPONSE_FROM_SERVICE_WORKER=YES
+OFFLINE_TITLE=Fire Your Coworkers — Pack the office. Survive HR.
+OFFLINE_H1=FIRE YOUR COWORKERS
+OFFLINE_STARTER_LEVEL_TEXT_PRESENT=YES
+OFFLINE_GAME_BOARD_PRESENT=YES
+OFFLINE_PIECE_TRAY_PRESENT=YES
+OFFLINE_CONSOLE_ERRORS_ADDED=0
+OFFLINE_PAGE_ERRORS_ADDED=0
+OFFLINE_REQUEST_FAILURES_ADDED=0
+
+UPDATE_BEHAVIOR=The deployed worker uses network-first navigations, a namespaced
+versioned shell cache, same-origin static-asset caching, stale-cache cleanup,
+client claiming, hourly/online update checks, and an explicit SKIP_WAITING path.
+
+BOUNDARY=Runtime registration, control, cached starter-level rendering, and offline
+reload were verified in desktop Chromium. Operating-system install acceptance is
+browser/device UI and was not asserted by this headless run.
