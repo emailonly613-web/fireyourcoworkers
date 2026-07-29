@@ -138,10 +138,14 @@ const pageErrors = [], consoleErrors = [];
 page.on("pageerror", e => pageErrors.push(e.message));
 page.on("console", m => { if (m.type() === "error") consoleErrors.push(m.text()); });
 
-await page.goto(GAME, { waitUntil: "load" });
-await page.waitForFunction(() => window.__FYC__ && window.__FYC__.debug);
+await page.goto(GAME, { waitUntil: "load", timeout: 60000 });
+await page.waitForFunction(() => window.__FYC__ && window.__FYC__.debug, { timeout: 60000 })
+  .catch(async e => {
+    console.error(`FATAL: game seam never appeared at ${page.url()} — title=${JSON.stringify(await page.title())}`);
+    throw e;
+  });
 
-console.log("\nFire Your Coworkers — end-to-end in real Chrome\n");
+console.log(`\nFire Your Coworkers — end-to-end in real Chrome\nTarget: ${GAME}\n`);
 console.log("Boot");
 const boot = await D(page);
 ok("game boots and exposes state", !!boot && boot.dims.w > 0);

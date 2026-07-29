@@ -1,17 +1,20 @@
-# DigitalOcean App Platform spec — static site, zero build.
-# Replace <OWNER>/<REPO> after pushing to GitHub.
+# DigitalOcean App Platform spec — free static site, zero build, plain-git source
+# (public repo, no GitHub integration required). Domains in the spec auto-create the
+# DO DNS zone and SSL, matching the ravarush.com pattern.
 name: fireyourcoworkers
+region: nyc
 static_sites:
-  - name: game
+  - name: web
     source_dir: web
-    github:
-      repo: <OWNER>/<REPO>
+    git:
+      repo_clone_url: https://github.com/emailonly613-web/fireyourcoworkers.git
       branch: main
-      deploy_on_push: true
     index_document: index.html
     error_document: index.html
 domains:
   - domain: fireyourcoworkers.com
     type: PRIMARY
+    zone: fireyourcoworkers.com
   - domain: www.fireyourcoworkers.com
     type: ALIAS
+    zone: fireyourcoworkers.com

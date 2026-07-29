@@ -83,3 +83,18 @@ Unity: still not installed, still never compiled; web is the launch vehicle.
 2. **Me, the moment it resolves:** full harness against production, then report "live"
    with the run output — not before.
 3. Then milestone 3: analytics on the four gating metrics.
+
+---
+
+## GO-LIVE PROBE — 2026-07-29 (after operator flipped nameservers)
+
+Chain probed link by link:
+1. Registry delegation: DONE — a.gtld-servers.net returns ns1/ns2/ns3.digitalocean.com.
+2. DO zone: MISSING — ns1.digitalocean.com answers REFUSED (domain not added in the DO account).
+3. Hosting: MISSING — no app/server exists; site never deployed.
+
+Puppeteer visitor probe (web/liveproof.mjs): NOT LIVE — ERR_NAME_NOT_RESOLVED on https and http.
+
+Local git repo READY: main @ 537695a, 52 files. Remaining (operator accounts):
+GitHub push -> DO App from repo (deploy/do-app.yaml) -> attach domain (creates zone + SSL)
+-> I rerun liveproof + FYC_URL e2e --all; live claimed only on 199/199 against production.
