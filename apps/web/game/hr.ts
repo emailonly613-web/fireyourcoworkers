@@ -38,7 +38,7 @@ export interface HrRuleDefinition {
   readonly id: HrRuleId;
   readonly publicLabel: string;
   readonly category: HrRuleCategory;
-  /** Base score. The repeated-drop rule applies this per repeat, up to 40. */
+  /** Base score. The repeated-drop rule applies this per repeat, capped at 34. */
   readonly score: number;
   readonly persistence: HrRulePersistence;
 }
@@ -69,7 +69,7 @@ export const HR_RULE_DEFINITIONS: readonly HrRuleDefinition[] = Object.freeze([
     id: "repeated-invalid-employee-drop",
     publicLabel: "Repeated Invalid Employee Drop",
     category: "action-history",
-    score: 12,
+    score: 11,
     persistence: "persistent-action",
   }),
 ]);
@@ -342,7 +342,7 @@ export function evaluateHr(
   const invalidDropCount = persistentState.invalidEmployeeDrops.length;
   if (invalidDropCount >= 2) {
     const repeatedDropDefinition = ruleDefinition("repeated-invalid-employee-drop");
-    const repeatedDropScore = Math.min(40, (invalidDropCount - 1) * repeatedDropDefinition.score);
+    const repeatedDropScore = Math.min(34, (invalidDropCount - 1) * repeatedDropDefinition.score);
     activeViolations.push(
       violation(
         "repeated-invalid-employee-drop",
@@ -381,7 +381,7 @@ const fixtureAttempt = (occurrenceKey: string, pieceId: EmployeePieceId): HrAtte
     reason: "out-of-bounds",
   });
 
-/** Deterministic 66 arrangement points + 36 persistent-action points = Lawsuit. */
+/** Four drops yield 66 + 33 = 99; the fifth yields 66 + 34 = Lawsuit. */
 export const HR_LAWSUIT_FIXTURE: HrLawsuitFixture = Object.freeze({
   placements: Object.freeze([
     Object.freeze({
@@ -402,5 +402,6 @@ export const HR_LAWSUIT_FIXTURE: HrLawsuitFixture = Object.freeze({
     fixtureAttempt("lawsuit-drop-002", "micro-managing-ceo"),
     fixtureAttempt("lawsuit-drop-003", "sleeping-intern"),
     fixtureAttempt("lawsuit-drop-004", "micro-managing-ceo"),
+    fixtureAttempt("lawsuit-drop-005", "sleeping-intern"),
   ]),
 });

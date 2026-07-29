@@ -87,14 +87,14 @@ describe("deterministic HR evaluation", () => {
       persistentState: first.persistentState,
       attempt: invalidDrop("attempt-002"),
     });
-    expect(second.score).toBe(12);
+    expect(second.score).toBe(11);
     expect(second.activeViolations[0]?.persistence).toBe("persistent-action");
 
     const duplicate = evaluateHr(game, {
       persistentState: second.persistentState,
       attempt: invalidDrop("attempt-002"),
     });
-    expect(duplicate.score).toBe(12);
+    expect(duplicate.score).toBe(11);
     expect(duplicate.persistentState.invalidEmployeeDrops).toHaveLength(2);
     expect(duplicate.activeViolations[0]?.evidence.occurrenceKeys).toEqual([
       "attempt-001",
@@ -119,7 +119,18 @@ describe("deterministic HR evaluation", () => {
     expect(getCompletionRating(75)).toBe("HR Will Follow Up");
   });
 
-  it("provides a deterministic lawsuit path at exactly 100", () => {
+  it("holds at 99 after four invalid drops and reaches lawsuit on the fifth", () => {
+    const preLawsuit = evaluateHr(lawsuitArrangement(), {
+      attempts: HR_LAWSUIT_FIXTURE.attempts.slice(0, 4),
+    });
+    expect(preLawsuit.score).toBe(99);
+    expect(preLawsuit.statusBand).toBe("Legal Is Typing");
+    expect(preLawsuit.lawsuit).toBe(false);
+    expect(preLawsuit.activeViolations.at(-1)).toMatchObject({
+      id: "repeated-invalid-employee-drop",
+      score: 33,
+    });
+
     const evaluation = evaluateHr(lawsuitArrangement(), {
       attempts: HR_LAWSUIT_FIXTURE.attempts,
     });
@@ -130,7 +141,7 @@ describe("deterministic HR evaluation", () => {
     expect(evaluation.lawsuit).toBe(true);
     expect(evaluation.activeViolations.at(-1)).toMatchObject({
       id: "repeated-invalid-employee-drop",
-      score: 36,
+      score: 34,
     });
   });
 
@@ -147,7 +158,7 @@ describe("deterministic HR evaluation", () => {
       persistentState: atLawsuit.persistentState,
     });
     expect(recovered.lawsuit).toBe(false);
-    expect(recovered.score).toBe(82);
+    expect(recovered.score).toBe(80);
     expect(recovered.activeViolations.map(({ id }) => id)).not.toContain(
       "unscheduled-executive-contact",
     );
