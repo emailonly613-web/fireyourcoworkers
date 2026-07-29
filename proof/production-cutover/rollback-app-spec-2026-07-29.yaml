@@ -1,0 +1,26 @@
+domains:
+- domain: fireyourcoworkers.com
+  type: PRIMARY
+  zone: fireyourcoworkers.com
+- domain: www.fireyourcoworkers.com
+  type: ALIAS
+  zone: fireyourcoworkers.com
+features:
+- buildpack-stack=ubuntu-22
+ingress:
+  rules:
+  - component:
+      name: web
+    match:
+      path:
+        prefix: /
+name: fireyourcoworkers
+region: nyc
+static_sites:
+- error_document: index.html
+  git:
+    branch: main
+    repo_clone_url: https://github.com/emailonly613-web/fireyourcoworkers.git
+  index_document: index.html
+  name: web
+  source_dir: web

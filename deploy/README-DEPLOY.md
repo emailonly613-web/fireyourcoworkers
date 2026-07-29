@@ -1,46 +1,54 @@
 # Deploying fireyourcoworkers.com
 
-The entire game is **one static file**: `web/index.html`. No build step, no server code,
-no dependencies. Anything that can serve a static file can serve the game.
+The production site is a prebuilt static export of the Fire Your Coworkers Next.js app.
+DigitalOcean serves the committed `public-preview/` directory; it does not run a Node
+service or perform a production build.
 
-## Option A — DigitalOcean App Platform static site (recommended)
+## Build and verify
 
-1. Push this repo to GitHub (or GitLab). Only `web/` matters for serving.
-2. DigitalOcean → **Create → Apps → static site**, point it at the repo.
-   - Source directory: `web`
-   - No build command. Output dir: `web`.
-   - Or use the included `deploy/do-app.yaml` as an App Spec.
-3. App Platform gives you an `*.ondigitalocean.app` URL immediately — verify the game
-   there FIRST (R0: proof before claim).
-4. Domains tab → add `fireyourcoworkers.com` and `www.fireyourcoworkers.com`.
-5. At the registrar, set nameservers to DigitalOcean:
-   `ns1.digitalocean.com`, `ns2.digitalocean.com`, `ns3.digitalocean.com`
-6. In DO **Networking → Domains**, the app adds the records automatically when the
-   domain is attached to the app. SSL is automatic (Let's Encrypt).
+```powershell
+corepack pnpm test
+corepack pnpm typecheck
+corepack pnpm build
+node scripts/build-static-preview.mjs
+```
 
-## Option B — any droplet / any static host
+The static builder defaults metadata and social URLs to
+`https://fireyourcoworkers.com`. Set `FYC_PUBLIC_ORIGIN` only when intentionally
+building the same artifact for another reviewed host.
 
-Copy `web/index.html` to the web root. Done. (nginx: `root /var/www/fyc;`)
+## Production deployment
 
-## Post-deploy verification checklist (run before telling anyone it's live)
+Production app ID: `8678783b-ec62-49d2-9758-b29d074c34e8`.
 
-- [ ] `https://fireyourcoworkers.com` loads over HTTPS, no console errors
-- [ ] Point the E2E harness at production:
-      `set FYC_URL=https://fireyourcoworkers.com && node web/e2e.mjs`
-      (harness uses the local file unless FYC_URL is set — see e2e.mjs)
-- [ ] Play floor 1 on a real phone over cellular, sound on
-- [ ] Coins persist across a page reload (localStorage)
+1. Commit and push the verified `public-preview/` tree to `main`.
+2. Review the proposed change:
 
-## Stripe (later milestone — needs the owner's account)
+   ```powershell
+   doctl apps propose --app 8678783b-ec62-49d2-9758-b29d074c34e8 --spec deploy/do-app.yaml
+   ```
 
-The economy is already structured for it: `SKINS` and `EXEC_PACK` in `web/index.html`
-form the catalog; `owns()` / `wallet.owned` is the entitlement check. When Stripe is
-wired:
-1. Each catalog item gets a Stripe Price ID.
-2. "Instant unlock" button → Stripe Checkout (hosted page; no card data touches us).
-3. A tiny webhook (DO Function or droplet) marks the entitlement server-side; the
-   client polls/refreshes entitlements on load.
-4. Until then the shop truthfully says: "Real-money instant unlocks arrive at launch."
+3. Update the existing app in place:
 
-Do NOT add ad SDKs or purchases before the site is live and measured — v2 dispatch
-order: analytics (step 4) → ads (9) → purchases (11).
+   ```powershell
+   doctl apps update 8678783b-ec62-49d2-9758-b29d074c34e8 `
+     --spec deploy/do-app.yaml --update-sources --wait
+   ```
+
+Updating the existing app preserves the apex and `www` domain attachments. No DNS
+change is part of an ordinary release.
+
+## Required live checks
+
+- Apex and `www` load the new cinematic homepage over HTTPS.
+- The integrated game accepts valid moves and rejects invalid moves.
+- Manifest, service worker, icons, Open Graph image, and build assets return successfully.
+- Open Graph URL and image use `https://fireyourcoworkers.com`.
+- Desktop and mobile have no horizontal overflow or browser-console errors.
+- The installed starter level survives an offline reload after one online visit.
+
+## Rollback
+
+The baseline tag `codex-takeover-baseline-2026-07-29` and the pre-cutover deployment
+reference under `proof/production-cutover/` identify the rejected legacy build. Roll back
+to that successful DigitalOcean deployment if the replacement fails its live gates.

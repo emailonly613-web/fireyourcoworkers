@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description:
     "A cinematic office-packing comedy game. Fit the team in the elevator before HR files the paperwork.",
   applicationName: "Fire Your Coworkers",
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: [
       { url: "/icons/app-icon.svg", type: "image/svg+xml" },

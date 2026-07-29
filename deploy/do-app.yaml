@@ -1,16 +1,15 @@
-# DigitalOcean App Platform spec — free static site, zero build, plain-git source
-# (public repo, no GitHub integration required). Domains in the spec auto-create the
-# DO DNS zone and SSL, matching the ravarush.com pattern.
+# DigitalOcean App Platform production spec. The Next.js app is prebuilt into the
+# committed public-preview directory, keeping the production component static and free.
 name: fireyourcoworkers
 region: nyc
 static_sites:
   - name: web
-    source_dir: web
+    source_dir: public-preview
     git:
       repo_clone_url: https://github.com/emailonly613-web/fireyourcoworkers.git
       branch: main
     index_document: index.html
-    error_document: index.html
+    error_document: 404.html
 domains:
   - domain: fireyourcoworkers.com
     type: PRIMARY
