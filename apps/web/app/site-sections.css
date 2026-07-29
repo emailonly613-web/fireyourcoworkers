@@ -211,6 +211,7 @@
   height: 104px;
   justify-self: center;
   max-width: 100%;
+  overflow: hidden;
   width: 100%;
 }
 

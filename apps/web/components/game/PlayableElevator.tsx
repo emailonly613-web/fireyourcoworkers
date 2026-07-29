@@ -209,6 +209,7 @@ function PlacedPiece({
     <button
       aria-label={`Move ${member.publicName}`}
       className={`playable-piece playable-piece--${placement.pieceId}${pressured ? " playable-piece--pressured" : ""}${flagged ? " playable-piece--hr-flagged" : ""}`}
+      data-rotation={placement.rotation}
       data-testid={`placed-${placement.pieceId}`}
       disabled={locked}
       onPointerDown={(event) => onPointerDown(event, placement.pieceId)}
@@ -216,11 +217,13 @@ function PlacedPiece({
       type="button"
     >
       <PieceCellMask placement={placement} />
-      <span
-        className="playable-piece__art-wrap"
-        style={{ "--piece-rotation": `${placement.rotation}deg` } as CSSProperties}
-      >
-        <PieceArt pieceId={placement.pieceId} shiftId={shiftId} />
+      <span aria-hidden="true" className="playable-piece__art-clip">
+        <span
+          className="playable-piece__art-wrap"
+          style={{ "--piece-rotation": `${placement.rotation}deg` } as CSSProperties}
+        >
+          <PieceArt pieceId={placement.pieceId} shiftId={shiftId} />
+        </span>
       </span>
       {reaction?.pieceId === placement.pieceId ? (
         <span className={`playable-piece__reaction playable-piece__reaction--${reaction.tone}`}>
