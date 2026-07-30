@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Purchase complete — Fire Your Coworkers</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="play/icon.svg" type="image/svg+xml">
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#05070b,#0d1521);color:#e9f0f7;
+    font:500 16px/1.5 ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center}
+  .card{max-width:380px;padding:34px 28px;background:#131b26;border-radius:18px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  h1{font-size:24px;margin:0 0 10px}
+  p{color:#8ea3b8;margin:0 0 18px}
+  a{display:inline-block;padding:13px 26px;border-radius:12px;background:#e8404f;color:#fff;
+    font-weight:700;text-decoration:none}
+  .item{color:#f2c94c;font-weight:750}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="t">Processing…</h1>
+  <p id="m">Confirming your purchase.</p>
+  <a href="play/">Back to the elevator</a>
+</div>
+<script>
+"use strict";
+/* TEST-RAILS FULFILLMENT ONLY.
+   These payment links are Stripe TEST mode — no real money can flow — so a client-side
+   grant after the Stripe redirect is an acceptable end-to-end demonstration.
+   HARD REQUIREMENT before flipping the links to live mode: this grant MUST be replaced
+   by a server-side session verification (retrieve the Checkout Session with the secret
+   key, confirm paid + livemode + price id) — a client-only grant with real money would
+   be trivially forgeable. See deploy/stripe-catalog.json. */
+(function(){
+  var q=new URLSearchParams(location.search);
+  var item=q.get("item"), sid=q.get("session_id");
+  var names={exec:"Full Office Pass",golden:"Golden Parachute Skin Pack",midnight:"Midnight Shift Skin Pack"};
+  var t=document.getElementById("t"), m=document.getElementById("m");
+  if(!item || !names[item] || !sid){
+    t.textContent="Nothing to confirm.";
+    m.textContent="If you just paid and see this, contact support with your receipt.";
+    return;
+  }
+  try{
+    var w=JSON.parse(localStorage.getItem("fyc_wallet")||"null")||{coins:0,owned:[],skin:"classic"};
+    if(w.owned.indexOf(item)<0) w.owned.push(item);
+    if(item==="golden"||item==="midnight") w.skin=item;
+    localStorage.setItem("fyc_wallet",JSON.stringify(w));
+    t.textContent="You own it.";
+    m.innerHTML='<span class="item">'+names[item]+'</span> is unlocked on this device. HR has been notified of your spending habits.';
+  }catch(e){
+    t.textContent="Almost.";
+    m.textContent="Purchase confirmed, but this browser blocks storage. Open the game and tap Shop to restore.";
+  }
+})();
+</script>
+</body>
+</html>
